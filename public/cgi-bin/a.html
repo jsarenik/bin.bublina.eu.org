@@ -22,7 +22,7 @@
 		<script type="text/javascript" data-cfasync="false" src="js/showdown-1.9.1.js" integrity="sha512-VeINC2WUWLyxgeQ56SsYFjQ5+d7RLvLPYOEYDFtEDd3AyVsgIsHYsWZ6WwgALwB6YR6qrVEM3IH4Bck96IfbMw==" crossorigin="anonymous"></script>
 		<script type="text/javascript" data-cfasync="false" src="js/purify-2.0.1.js" integrity="sha512-ddI36MdUoXp/o7yhQtr9/qj4G3oFwCRga4jCGaoUYtORg0PPmFKVKG4Ess3fIknYzxwwKMlrIL9o4NwuPTCc1Q==" crossorigin="anonymous"></script>
 		<script type="text/javascript" data-cfasync="false" src="js/legacy.js?1.3.1" integrity="sha512-LYos+qXHIRqFf5ZPNphvtTB0cgzHUizu2wwcOwcwz/VIpRv9lpcBgPYz4uq6jx0INwCAj6Fbnl5HoKiLufS2jg==" crossorigin="anonymous"></script>
-		<script type="text/javascript" data-cfasync="false" src="js/privatebin.js?1.3.1" integrity="sha512-iZeao0p5riUgentjlrI2cY7Y8KRLTO42bQ4VGy6ky5FS0UjqXW4UkEJQcvR01SxbUFUz7h5AwzC8CVnUHDwRUg==" crossorigin="anonymous"></script>
+		<script type="text/javascript" data-cfasync="false" src="js/privatebin.js?1.3.1" crossorigin="anonymous"></script>
 		<link rel="apple-touch-icon" href="img/apple-touch-icon.png?1.3.1" sizes="180x180" />
 		<link rel="icon" type="image/png" href="img/favicon-32x32.png?1.3.1" sizes="32x32" />
 		<link rel="icon" type="image/png" href="img/favicon-16x16.png?1.3.1" sizes="16x16" />
@@ -65,7 +65,7 @@
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<a class="reloadlink navbar-brand" href="">
+				<a class="reloadlink navbar-brand" href="/">
 					<img alt="PrivateBin" src="img/icon.svg" width="38" />
 				</a>
 			</div>
@@ -383,15 +383,6 @@
 					<span class="small">In case this message never disappears please have a look at <a href="https://github.com/PrivateBin/PrivateBin/wiki/FAQ#why-does-not-the-loading-message-go-away">this FAQ for information to troubleshoot</a>.</span>
 				</div>
 			</section>
-			<footer class="container">
-				<div class="row">
-					<h4 class="col-md-5 col-xs-8">PrivateBin <small>- Because ignorance is bliss</small></h4>
-					<p class="col-md-1 col-xs-4 text-center">1.3.1</p>
-					<p id="aboutbox" class="col-md-6 col-xs-12">
-						PrivateBin is a minimalist, open source online pastebin where the server has zero knowledge of pasted data. Data is encrypted/decrypted <i>in the browser</i> using 256 bits AES. More information on the <a href="https://privatebin.info/">project page</a>.
-					</p>
-				</div>
-			</footer>
 		</main>
 		<div id="serverdata" class="hidden" aria-hidden="true">
 			<div id="templates">
