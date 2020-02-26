@@ -4051,7 +4051,6 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             }
             $.ajax(ajaxParams).fail(function(jqXHR, textStatus, errorThrown) {
                 console.error(textStatus, errorThrown);
-                console.log(url);
                 fail(3, jqXHR);
             });
         };
