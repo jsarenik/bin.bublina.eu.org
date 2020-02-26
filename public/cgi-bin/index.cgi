@@ -18,6 +18,7 @@ cat | jq -c "{status:0, id:\"$id\", url:\"\/?$id\", adata, ct, v:2, meta: {creat
 cat <<EOF
 {"status":0,"id":"$id","url":"\/?$id","deletetoken":"$dt"}
 EOF
+exit
 }
 
 test "$REQUEST_METHOD" = "GET" -a -z "$pasteid" && {
@@ -30,6 +31,7 @@ test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -n "$deletetoken" && {
   echo "Content-Type: text/html; charset=UTF-8"
   echo
   grep -Fwq "$deletetoken" $WHERE/$pasteid && { rm $WHERE/$pasteid; exec cat $HERE/b.html; } || exec cat $HERE/notdeleted.html
+  exit
 }
 
 test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -r $WHERE/$pasteid && {
@@ -37,4 +39,11 @@ test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -r $WHERE/$pasteid && {
   echo
   cat $WHERE/$pasteid
   jq .adata[3] $WHERE/$pasteid | grep -qFx 1 && rm $WHERE/$pasteid
+  exit
 }
+
+echo "Content-Type: application/json; charset=UTF-8"
+echo
+cat <<EOF
+{"status":1,"message":"Paste does not exist, has expired or has been deleted."}
+EOF
