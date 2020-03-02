@@ -66,7 +66,7 @@ $DATA,\
 \"@context\":\"?jsonld=paste\"\
 }"
 
-  echo $ADATACT | grep -oq '0,1]' && rm -rf $WHERE/$pasteid
+  echo $DATA | grep -oq '0,1]' && rm -rf $WHERE/$pasteid
   exit
 }
 
