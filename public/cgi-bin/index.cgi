@@ -47,7 +47,7 @@ test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -n "$deletetoken" && {
 }
 
 test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -r $WHERE/$pasteid/data && {
-  echo "Content-Type: application/jsan; charset=UTF-8"
+  echo "Content-Type: application/json; charset=UTF-8"
   echo
   NOW=$(date +%s)
   . $WHERE/$pasteid/env
