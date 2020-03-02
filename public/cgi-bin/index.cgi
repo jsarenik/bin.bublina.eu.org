@@ -21,14 +21,13 @@ NOW=$(date +%s)
 id=$(genrandom)
 mkdir -p $WHERE/$id || id=$(genrandom)
 dt=$(genrandom 4)
-cat \
-  | jq -c "{status:0, id:\"$id\", url:\"\/?$id\", adata, ct, v:2, meta: {created: $NOW}, comments:[], comment_count:0, comment_offset:0, \"@context\":\"?jsonld=paste\"}" \
-  > $WHERE/$id/data
-echo "$dt" > $WHERE/$id/dt
+{
+echo CREATED=$NOW
+echo DT=$dt
+} > $WHERE/$id/env
+grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $WHERE/$id/data
 
-cat <<EOF
-{"status":0,"id":"$id","url":"\/?$id","deletetoken":"$dt"}
-EOF
+echo "{\"status\":0,\"id\":\"$id\",\"url\":\"/?$id\",\"deletetoken\":\"$dt\"}"
 exit
 }
 
@@ -41,24 +40,36 @@ test "$REQUEST_METHOD" = "GET" -a -z "$pasteid" && {
 test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -n "$deletetoken" && {
   echo "Content-Type: text/html; charset=UTF-8"
   echo
-  grep -Fxq $deletetoken $WHERE/$pasteid/dt && { rm -rf $WHERE/$pasteid; exec cat $HERE/b.html; } || exec cat $HERE/notdeleted.html
+  . $WHERE/$pasteid/env
+  test "$deletetoken" = "$DT" \
+    && { rm -rf $WHERE/$pasteid; exec cat $HERE/b.html; } \
+    || exec cat $HERE/notdeleted.html
 }
 
 test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -r $WHERE/$pasteid/data && {
   echo "Content-Type: application/jsan; charset=UTF-8"
   echo
-  CREATED=$(jq .meta.created $WHERE/$pasteid/data)
   NOW=$(date +%s)
-  TTL=$(echo "604800-$NOW+$CREATED" | bc)
+  . $WHERE/$pasteid/env
+  TTL=$((CREATED+604800-NOW))
+  DATA=$(grep -v '^"meta":' $WHERE/$pasteid/data | tr -d '\n')
+  echo "\
+{\
+\"status\":0,\
+\"id\":\"$pasteid\",\
+\"url\":\"/?$pasteid\",\
+$DATA,\
+\"meta\":{\"created\":$CREATED,\"time_to_live\":$TTL},\
+\"comments\":[],\
+\"comment_count\":0,\
+\"comment_offset\":0,\
+\"@context\":\"?jsonld=paste\"\
+}"
 
-  jq -c "{status:0, id, url, adata, ct, v:2, meta: {created: .meta.created, time_to_live: $TTL}, comments, comment_count, comment_offset, \"@context\"}" \
-    $WHERE/$pasteid/data
-  jq .adata[3] $WHERE/$pasteid/data | grep -qFx 1 && rm -rf $WHERE/$pasteid
+  echo $ADATACT | grep -oq '0,1]' && rm -rf $WHERE/$pasteid
   exit
 }
 
 echo "Content-Type: application/json; charset=UTF-8"
 echo
-cat <<EOF
-{"status":1,"message":"Paste does not exist, has expired or has been deleted."}
-EOF
+exec cat $HERE/nonexistent.json
