@@ -16,18 +16,49 @@ genrandom(){
 test "$REQUEST_METHOD" = "POST" -a -z "$pasteid" && {
 echo "Content-Type: application/json; charset=UTF-8"
 echo
-#id=d0c8d91aa2b718dc
 NOW=$(date +%s)
-id=$(genrandom)
-mkdir -p $WHERE/$id || id=$(genrandom)
+test -n "$HTTP_X_REAL_IP" || HTTP_X_REAL_IP=$REMOTE_ADDR
+LIMIT=$WHERE/limit/$(echo $HTTP_X_REAL_IP | tr -d '.:[]')
+test -r $LIMIT && {
+  LAST=$(stat -c "%Y" $LIMIT)
+  test $((NOW-LAST)) -le 10 && {
+    echo "{\"status\":1,\"message\":\"Please wait 10 seconds between each post.\"}"
+    exit
+  }
+} || test -d $WHERE/limit || mkdir $WHERE/limit
+touch $LIMIT
+#id=d0c8d91aa2b718dc
 dt=$(genrandom 4)
-{
-echo CREATED=$NOW
-echo DT=$dt
-} > $WHERE/$id/env
-grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $WHERE/$id/data
+TMP=$(mktemp)
+grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $TMP
+if
+  P=$(grep '^"pasteid":' $TMP)
+then
+  P=${P##*:\"}
+  pasteid=${P%\",}
+  TD=$WHERE/$pasteid
+  ND=$TD/comment
+  while ! mkdir -p $ND/.lock; do sleep 0.1; done
+  test -r $TD/next && next=$(cat $TD/next) || next=1
+  test -d $ND || mkdir $ND
+  mv $TMP $ND/$next
+  echo $((next+1)) > $TD/next
+  rmdir $ND/.lock
+  echo "{\"status\":0,\"id\":\"$pasteid\",\"url\":\"/?$pasteid\"}"
+else
+  while
+    id=$(genrandom)
+    ! mkdir -p $WHERE/$id
+  do : ; done
+  TD=$WHERE/$id
+  mv $TMP $TD/data
+  {
+  echo CREATED=$NOW
+  echo DT=$dt
+  } > $TD/env
+  echo "{\"status\":0,\"id\":\"$id\",\"url\":\"/?$id\",\"deletetoken\":\"$dt\"}"
+fi
 
-echo "{\"status\":0,\"id\":\"$id\",\"url\":\"/?$id\",\"deletetoken\":\"$dt\"}"
 exit
 }
 
@@ -40,9 +71,10 @@ test "$REQUEST_METHOD" = "GET" -a -z "$pasteid" && {
 test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -n "$deletetoken" && {
   echo "Content-Type: text/html; charset=UTF-8"
   echo
-  . $WHERE/$pasteid/env
+  TD=$WHERE/$pasteid
+  . $TD/env
   test "$deletetoken" = "$DT" \
-    && { rm -rf $WHERE/$pasteid; exec cat $HERE/b.html; } \
+    && { rm -rf $TD; exec cat $HERE/b.html; } \
     || exec cat $HERE/notdeleted.html
 }
 
@@ -50,23 +82,49 @@ test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -r $WHERE/$pasteid/data && {
   echo "Content-Type: application/json; charset=UTF-8"
   echo
   NOW=$(date +%s)
-  . $WHERE/$pasteid/env
+  TD=$WHERE/$pasteid
+  . $TD/env
   TTL=$((CREATED+604800-NOW))
-  DATA=$(grep -v '^"meta":' $WHERE/$pasteid/data | tr -d '\n')
+  DATA=$(grep -v '^"meta":' $TD/data | tr -d '\n')
   echo "\
 {\
 \"status\":0,\
 \"id\":\"$pasteid\",\
 \"url\":\"/?$pasteid\",\
 $DATA,\
-\"meta\":{\"created\":$CREATED,\"time_to_live\":$TTL},\
+\"meta\":{\"created\":$CREATED,\"time_to_live\":$TTL},"
+
+if
+  ! test -d $TD/comment
+then
+  echo "\
 \"comments\":[],\
 \"comment_count\":0,\
 \"comment_offset\":0,\
 \"@context\":\"?jsonld=paste\"\
 }"
+else
+NUM=$(cat $TD/next)
+NUM=$((NUM-1))
+echo "\
+\"comment_count\":$NUM,\
+\"comment_offset\":0,\
+\"@context\":\"?jsonld=paste\",\
+\"comments\":["
+for i in $(seq $NUM)
+do
+  CREATED=$(stat -c "%Y" $TD/comment/$i)
+  ID=$(md5sum $TD/comment/$i | cut -b-16)
+  test $i -eq 1 && echo "{" || echo ",{"
+  cat $TD/comment/$i
+  echo ",\"meta\":{\"created\":$CREATED,\"icon\":\"data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAABnRSTlMAAAAAAABupgeRAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAQ0lEQVQokWNkgAGHBQkMuMGBhAUMDAxMeFRgAlqqZsQUQvYAxLkUm01+mBxIWIDmBnJcwoJVFJeraBom+IMCDdAy5gEFVRIcKzO8OgAAAABJRU5ErkJggg==\"},\"id\":\"$ID\""
+  echo "}"
+done
+echo "]}"
+fi
 
-  echo $DATA | grep -oqF '0,1]' && rm -rf $WHERE/$pasteid
+
+  echo $DATA | grep -oqF '0,1]' && rm -rf $TD
   exit
 }
 
