@@ -1,3 +1,7 @@
+#!/bin/sh
+echo "Content-Type: application/json"
+echo
+cat <<EOF
 {
 	"name": "PrivateBin",
 	"icons": [
@@ -15,3 +19,4 @@
 	"theme_color": "#ffe57e",
 	"display": "standalone"
 }
+EOF
