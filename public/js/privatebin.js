@@ -6,7 +6,7 @@
  * @see       {@link https://github.com/PrivateBin/PrivateBin}
  * @copyright 2012 Sébastien SAUVAGE ({@link http://sebsauvage.net})
  * @license   {@link https://www.opensource.org/licenses/zlib-license.php The zlib/libpng License}
- * @version   1.3.1
+ * @version   1.3.3
  * @name      PrivateBin
  * @namespace
  */
@@ -190,6 +190,84 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         const me = {};
 
         /**
+         * character to HTML entity lookup table
+         *
+         * @see    {@link https://github.com/janl/mustache.js/blob/master/mustache.js#L60}
+         * @name Helper.entityMap
+         * @private
+         * @enum   {Object}
+         * @readonly
+         */
+        const entityMap = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '/': '&#x2F;',
+            '`': '&#x60;',
+            '=': '&#x3D;'
+        };
+
+        /**
+         * number of seconds in a minute
+         *
+         * @name Helper.minute
+         * @private
+         * @enum   {number}
+         * @readonly
+         */
+        const minute = 60;
+
+        /**
+         * number of seconds in an hour
+         *
+         * = 60 * 60 seconds
+         *
+         * @name Helper.minute
+         * @private
+         * @enum   {number}
+         * @readonly
+         */
+        const hour = 3600;
+
+        /**
+         * number of seconds in a day
+         *
+         * = 60 * 60 * 24 seconds
+         *
+         * @name Helper.day
+         * @private
+         * @enum   {number}
+         * @readonly
+         */
+        const day = 86400;
+
+        /**
+         * number of seconds in a month (30 days, an approximation)
+         *
+         * = 60 * 60 * 24 * 30 seconds
+         *
+         * @name Helper.month
+         * @private
+         * @enum   {number}
+         * @readonly
+         */
+        const month = 2592000;
+
+        /**
+         * number of seconds in a non-leap year
+         *
+         * = 60 * 60 * 24 * 365 seconds
+         *
+         * @name Helper.year
+         * @private
+         * @enum   {number}
+         * @readonly
+         */
+        const year = 31536000;
+
+        /**
          * cache for script location
          *
          * @name Helper.baseUri
@@ -209,29 +287,65 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         me.secondsToHuman = function(seconds)
         {
             let v;
-            if (seconds < 60)
+            if (seconds < minute)
             {
                 v = Math.floor(seconds);
                 return [v, 'second'];
             }
-            if (seconds < 60 * 60)
+            if (seconds < hour)
             {
-                v = Math.floor(seconds / 60);
+                v = Math.floor(seconds / minute);
                 return [v, 'minute'];
             }
-            if (seconds < 60 * 60 * 24)
+            if (seconds < day)
             {
-                v = Math.floor(seconds / (60 * 60));
+                v = Math.floor(seconds / hour);
                 return [v, 'hour'];
             }
             // If less than 2 months, display in days:
-            if (seconds < 60 * 60 * 24 * 60)
+            if (seconds < (2 * month))
             {
-                v = Math.floor(seconds / (60 * 60 * 24));
+                v = Math.floor(seconds / day);
                 return [v, 'day'];
             }
-            v = Math.floor(seconds / (60 * 60 * 24 * 30));
+            v = Math.floor(seconds / month);
             return [v, 'month'];
+        };
+
+        /**
+         * converts a duration string into seconds
+         *
+         * The string is expected to be optional digits, followed by a time.
+         * Supported times are: min, hour, day, month, year, never
+         * Examples: 5min, 13hour, never
+         *
+         * @name Helper.durationToSeconds
+         * @function
+         * @param  {String} duration
+         * @return {number}
+         */
+        me.durationToSeconds = function(duration)
+        {
+            let pieces   = duration.split(/\d+/),
+                factor   = pieces[0] || 0,
+                timespan = pieces[1] || pieces[0];
+            switch (timespan)
+            {
+                case 'min':
+                    return factor * minute;
+                case 'hour':
+                    return factor * hour;
+                case 'day':
+                    return factor * day;
+                case 'month':
+                    return factor * month;
+                case 'year':
+                    return factor * year;
+                case 'never':
+                    return 0;
+                default:
+                    return factor;
+            }
         };
 
         /**
@@ -302,19 +416,12 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             let format = args[0],
                 i = 1;
             return format.replace(/%(s|d)/g, function (m) {
-                // m is the matched format, e.g. %s, %d
                 let val = args[i];
-                // A switch statement so that the formatter can be extended.
-                switch (m)
-                {
-                    case '%d':
-                        val = parseFloat(val);
-                        if (isNaN(val)) {
-                            val = 0;
-                        }
-                        break;
-                    default:
-                        // Default is %s
+                if (m === '%d') {
+                    val = parseFloat(val);
+                    if (isNaN(val)) {
+                        val = 0;
+                    }
                 }
                 ++i;
                 return val;
@@ -393,6 +500,50 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         };
 
         /**
+         * convert all applicable characters to HTML entities
+         *
+         * @see    {@link https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html}
+         * @name   Helper.htmlEntities
+         * @function
+         * @param  {string} str
+         * @return {string} escaped HTML
+         */
+        me.htmlEntities = function(str) {
+            return String(str).replace(
+                /[&<>"'`=\/]/g, function(s) {
+                    return entityMap[s];
+                }
+            );
+        }
+
+        /**
+         * calculate expiration date given initial date and expiration period
+         * 
+         * @name   Helper.calculateExpirationDate
+         * @function
+         * @param  {Date} initialDate - may not be empty
+         * @param  {string|number} expirationDisplayStringOrSecondsToExpire - may not be empty
+         * @return {Date}
+         */
+        me.calculateExpirationDate = function(initialDate, expirationDisplayStringOrSecondsToExpire) {
+            let expirationDate      = new Date(initialDate),
+                secondsToExpiration = expirationDisplayStringOrSecondsToExpire;
+            if (typeof expirationDisplayStringOrSecondsToExpire === 'string') {
+                secondsToExpiration = me.durationToSeconds(expirationDisplayStringOrSecondsToExpire);
+            }
+            
+            if (typeof secondsToExpiration !== 'number') {
+                throw new Error('Cannot calculate expiration date.');
+            }
+            if (secondsToExpiration === 0) {
+                return null;
+            }
+
+            expirationDate = expirationDate.setUTCSeconds(expirationDate.getUTCSeconds() + secondsToExpiration);
+            return expirationDate;
+        };
+
+        /**
          * resets state, used for unit testing
          *
          * @name   Helper.reset
@@ -433,7 +584,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
          * @prop   {string[]}
          * @readonly
          */
-        const supportedLanguages = ['bg', 'cs', 'de', 'es', 'fr', 'it', 'hu', 'no', 'nl', 'pl', 'pt', 'oc', 'ru', 'sl', 'zh'];
+        const supportedLanguages = ['bg', 'cs', 'de', 'es', 'fr', 'it', 'hu', 'no', 'nl', 'pl', 'pt', 'oc', 'ru', 'sl', 'uk', 'zh'];
 
         /**
          * built in language
@@ -473,10 +624,14 @@ jQuery.PrivateBin = (function($, RawDeflate) {
          *
          * Optionally pass a jQuery element as the first parameter, to automatically
          * let the text of this element be replaced. In case the (asynchronously
-         * loaded) language is not downloadet yet, this will make sure the string
-         * is replaced when it is actually loaded.
-         * So for easy translations passing the jQuery object to apply it to is
-         * more save, especially when they are loaded in the beginning.
+         * loaded) language is not downloaded yet, this will make sure the string
+         * is replaced when it eventually gets loaded. Using this is both simpler
+         * and more secure, as it avoids potential XSS when inserting text.
+         * The next parameter is the message ID, matching the ones found in
+         * the translation files under the i18n directory.
+         * Any additional parameters will get inserted into the message ID in
+         * place of %s (strings) or %d (digits), applying the appropriate plural
+         * in case of digits. See also Helper.sprintf().
          *
          * @name   I18n.translate
          * @function
@@ -553,17 +708,40 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                 args[0] = translations[messageId];
             }
 
+            // messageID may contain links, but should be from a trusted source (code or translation JSON files)
+            let containsLinks = args[0].indexOf('<a') !== -1;
+
+            // prevent double encoding, when we insert into a text node
+            if (containsLinks || $element === null) {
+                for (let i = 0; i < args.length; ++i) {
+                    // parameters (i > 0) may never contain HTML as they may come from untrusted parties
+                    if ((containsLinks ? i > 1 : i > 0) || !containsLinks) {
+                        args[i] = Helper.htmlEntities(args[i]);
+                    }
+                }
+            }
             // format string
             let output = Helper.sprintf.apply(this, args);
 
-            // if $element is given, apply text to element
+            if (containsLinks) {
+                // only allow tags/attributes we actually use in translations
+                output = DOMPurify.sanitize(
+                    output, {
+                        ALLOWED_TAGS: ['a', 'i', 'span'],
+                        ALLOWED_ATTR: ['href', 'id']
+                    }
+                );
+            }
+
+            // if $element is given, insert translation
             if ($element !== null) {
-                // avoid HTML entity encoding if translation contains link
-                if (output.indexOf('<a') === -1) {
-                    $element.text(output);
-                } else {
+                if (containsLinks) {
                     $element.html(output);
+                } else {
+                    // text node takes care of entity encoding
+                    $element.text(output);
                 }
+                return '';
             }
 
             return output;
@@ -590,6 +768,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                 case 'pl':
                     return n === 1 ? 0 : (n % 10 >= 2 && n %10 <=4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2);
                 case 'ru':
+                case 'uk':
                     return n % 10 === 1 && n % 100 !== 11 ? 0 : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2);
                 case 'sl':
                     return n % 100 === 1 ? 1 : (n % 100 === 2 ? 2 : (n % 100 === 3 || n % 100 === 4 ? 3 : 0));
@@ -1795,11 +1974,10 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                             return a.length - b.length;
                         })[0];
                         if (typeof shortUrl === 'string' && shortUrl.length > 0) {
-                            $('#pastelink').html(
-                                I18n._(
-                                    'Your paste is <a id="pasteurl" href="%s">%s</a> <span id="copyhint">(Hit [Ctrl]+[c] to copy)</span>',
-                                    shortUrl, shortUrl
-                                )
+                            I18n._(
+                                $('#pastelink'),
+                                'Your paste is <a id="pasteurl" href="%s">%s</a> <span id="copyhint">(Hit [Ctrl]+[c] to copy)</span>',
+                                shortUrl, shortUrl
                             );
                             // we disable the button to avoid calling shortener again
                             $shortenButton.addClass('buttondisabled');
@@ -1822,7 +2000,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                     `${$shortenButton.data('shortener')}${encodeURIComponent($pasteUrl.attr('href'))}`,
                     '_blank',
                     'noopener, noreferrer'
-                )
+                );
             });
         }
 
@@ -1854,11 +2032,10 @@ jQuery.PrivateBin = (function($, RawDeflate) {
          */
         me.createPasteNotification = function(url, deleteUrl)
         {
-            $('#pastelink').html(
-                I18n._(
-                    'Your paste is <a id="pasteurl" href="%s">%s</a> <span id="copyhint">(Hit [Ctrl]+[c] to copy)</span>',
-                    url, url
-                )
+            I18n._(
+                $('#pastelink'),
+                'Your paste is <a id="pasteurl" href="%s">%s</a> <span id="copyhint">(Hit [Ctrl]+[c] to copy)</span>',
+                url, url
             );
             // save newly created element
             $pasteUrl = $('#pasteurl');
@@ -1866,7 +2043,8 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             $pasteUrl.click(pasteLinkClick);
 
             // delete link
-            $('#deletelink').html('<a href="' + deleteUrl + '">' + I18n._('Delete data') + '</a>');
+            $('#deletelink').html('<a href="' + deleteUrl + '"></a>');
+            I18n._($('#deletelink a').first(), 'Delete data');
 
             // enable shortener button
             $shortenButton.removeClass('buttondisabled');
@@ -2124,6 +2302,9 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             $messageEdit.addClass('active');
             $messagePreview.removeClass('active');
 
+            $('#messageedit').attr('aria-selected','true');
+            $('#messagepreview').attr('aria-selected','false');
+
             PasteViewer.hide();
 
             // reshow input
@@ -2152,6 +2333,9 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             // toggle buttons
             $messageEdit.removeClass('active');
             $messagePreview.addClass('active');
+
+            $('#messageedit').attr('aria-selected','false');
+            $('#messagepreview').attr('aria-selected','true');
 
             // hide input as now preview is shown
             $message.addClass('hidden');
@@ -2321,10 +2505,13 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             }
 
             // escape HTML entities, link URLs, sanitize
-            const escapedLinkedText = Helper.urls2links(
-                    $('<div />').text(text).html()
-                  ),
-                  sanitizedLinkedText = DOMPurify.sanitize(escapedLinkedText);
+            const escapedLinkedText = Helper.urls2links(text),
+                  sanitizedLinkedText = DOMPurify.sanitize(
+                    escapedLinkedText, {
+                        ALLOWED_TAGS: ['a'],
+                        ALLOWED_ATTR: ['href', 'rel']
+                    }
+                  );
             $plainText.html(sanitizedLinkedText);
             $prettyPrint.html(sanitizedLinkedText);
 
@@ -2755,7 +2942,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             // move elemement to new place
             $attachmentLink.appendTo($element);
 
-            // update text
+            // update text - ensuring no HTML is inserted into the text node
             I18n._($attachmentLink, label, $attachmentLink.attr('download'));
         };
 
@@ -3007,8 +3194,8 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             $attachment = $('#attachment');
             $dragAndDropFileName = $('#dragAndDropFileName');
             $dropzone = $('#dropzone');
+            $attachmentLink = $('#attachment a') || $('<a>');
             if($attachment.length) {
-                $attachmentLink = $('#attachment a');
                 $attachmentPreview = $('#attachmentPreview');
 
                 $fileInput = $('#file');
@@ -3138,7 +3325,10 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             // set & parse text
             $commentEntryData.html(
                 DOMPurify.sanitize(
-                    Helper.urls2links(commentText)
+                    Helper.urls2links(commentText), {
+                        ALLOWED_TAGS: ['a'],
+                        ALLOWED_ATTR: ['href', 'rel']
+                    }
                 )
             );
 
@@ -3332,9 +3522,10 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             $passwordInput,
             $rawTextButton,
             $qrCodeLink,
+            $emailLink,
             $sendButton,
             $retryButton,
-            pasteExpiration = '1week',
+            pasteExpiration = null,
             retryButtonCallback;
 
         /**
@@ -3453,7 +3644,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             for (let i = 0; i < $head.length; ++i) {
                 newDoc.write($head[i].outerHTML);
             }
-            newDoc.write('</head><body><pre>' + DOMPurify.sanitize($('<div />').text(paste).html()) + '</pre></body></html>');
+            newDoc.write('</head><body><pre>' + DOMPurify.sanitize(Helper.htmlEntities(paste)) + '</pre></body></html>');
             newDoc.close();
         }
 
@@ -3543,6 +3734,130 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         }
 
         /**
+         * Template Email body.
+         * 
+         * @name   TopNav.templateEmailBody
+         * @private 
+         * @param {string} expirationDateString 
+         * @param {bool} isBurnafterreading 
+         */
+        function templateEmailBody(expirationDateString, isBurnafterreading)
+        {
+            const EOL = '\n';
+            const BULLET = '  - ';
+            let emailBody = '';
+            if (expirationDateString !== null || isBurnafterreading) {
+                emailBody += I18n._('Notice:');
+                emailBody += EOL;
+
+                if (expirationDateString !== null) {
+                    emailBody += EOL;
+                    emailBody += BULLET;
+                    emailBody += I18n._(
+                        'This link will expire after %s.',
+                        expirationDateString
+                    );
+                }
+                if (isBurnafterreading) {
+                    emailBody += EOL;
+                    emailBody += BULLET;
+                    emailBody += I18n._(
+                        'This link can only be accessed once, do not use back or refresh button in your browser.'
+                    );
+                }
+
+                emailBody += EOL;
+                emailBody += EOL;
+            }
+            emailBody += I18n._('Link:');
+            emailBody += EOL;
+            emailBody += `${window.location.href}`;
+            return emailBody;
+        }
+
+        /**
+         * Trigger Email send.
+         * 
+         * @name   TopNav.triggerEmailSend
+         * @private 
+         * @param {string} emailBody 
+         */
+        function triggerEmailSend(emailBody)
+        {
+            window.open(
+                `mailto:?body=${encodeURIComponent(emailBody)}`,
+                '_self',
+                'noopener, noreferrer'
+            );
+        }
+
+        /**
+         * Send Email with current paste (URL).
+         *
+         * @name   TopNav.sendEmail
+         * @private
+         * @function
+         * @param  {Date|null} expirationDate date of expiration
+         * @param  {bool} isBurnafterreading whether it is burn after reading
+         */
+        function sendEmail(expirationDate, isBurnafterreading)
+        {
+            const expirationDateRoundedToSecond = new Date(expirationDate);
+
+            // round down at least 30 seconds to make up for the delay of request
+            expirationDateRoundedToSecond.setUTCSeconds(
+                expirationDateRoundedToSecond.getUTCSeconds() - 30
+            );
+            expirationDateRoundedToSecond.setUTCSeconds(0);
+
+            const $emailconfirmmodal = $('#emailconfirmmodal');
+            if ($emailconfirmmodal.length > 0) {
+                if (expirationDate !== null) {
+                    I18n._(
+                        $emailconfirmmodal.find('#emailconfirm-display'),
+                        'Recipient may become aware of your timezone, convert time to UTC?'
+                    );
+                    const $emailconfirmTimezoneCurrent = $emailconfirmmodal.find('#emailconfirm-timezone-current');
+                    const $emailconfirmTimezoneUtc = $emailconfirmmodal.find('#emailconfirm-timezone-utc');
+                    $emailconfirmTimezoneCurrent.off('click.sendEmailCurrentTimezone');
+                    $emailconfirmTimezoneCurrent.on('click.sendEmailCurrentTimezone', () => {
+                        const emailBody = templateEmailBody(expirationDateRoundedToSecond.toLocaleString(), isBurnafterreading);
+                        $emailconfirmmodal.modal('hide');
+                        triggerEmailSend(emailBody);
+                    });
+                    $emailconfirmTimezoneUtc.off('click.sendEmailUtcTimezone');
+                    $emailconfirmTimezoneUtc.on('click.sendEmailUtcTimezone', () => {
+                        const emailBody = templateEmailBody(expirationDateRoundedToSecond.toLocaleString(
+                            undefined,
+                            // we don't use Date.prototype.toUTCString() because we would like to avoid GMT
+                            { timeZone: 'UTC', dateStyle: 'long', timeStyle: 'long' }
+                        ), isBurnafterreading);
+                        $emailconfirmmodal.modal('hide');
+                        triggerEmailSend(emailBody);
+                    });
+                    $emailconfirmmodal.modal('show');
+                } else {
+                    triggerEmailSend(templateEmailBody(null, isBurnafterreading));
+                }
+            } else {
+                let emailBody = '';
+                if (expirationDate !== null) {
+                    const expirationDateString = window.confirm(
+                        I18n._('Recipient may become aware of your timezone, convert time to UTC?')
+                    ) ? expirationDateRoundedToSecond.toLocaleString(
+                        undefined,
+                        // we don't use Date.prototype.toUTCString() because we would like to avoid GMT
+                        { timeZone: 'UTC', dateStyle: 'long', timeStyle: 'long' }
+                    ) : expirationDateRoundedToSecond.toLocaleString();
+                    emailBody = templateEmailBody(expirationDateString, isBurnafterreading);
+                } else {
+                    emailBody = templateEmailBody(null, isBurnafterreading);
+                }
+                triggerEmailSend(emailBody);
+            }
+        }
+
+        /**
          * Shows all navigation elements for viewing an existing paste
          *
          * @name   TopNav.showViewButtons
@@ -3578,6 +3893,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             $newButton.addClass('hidden');
             $rawTextButton.addClass('hidden');
             $qrCodeLink.addClass('hidden');
+            me.hideEmailButton();
 
             viewButtonsDisplayed = false;
         };
@@ -3676,6 +3992,46 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         }
 
         /**
+         * show the "email" button
+         * 
+         * @name   TopNav.showEmailbutton
+         * @function
+         * @param {int|undefined} optionalRemainingTimeInSeconds
+         */
+        me.showEmailButton = function(optionalRemainingTimeInSeconds)
+        {
+            try {
+                // we cache expiration date in closure to avoid inaccurate expiration datetime
+                const expirationDate = Helper.calculateExpirationDate(
+                    new Date(),
+                    typeof optionalRemainingTimeInSeconds === 'number' ? optionalRemainingTimeInSeconds : TopNav.getExpiration()
+                );
+                const isBurnafterreading = TopNav.getBurnAfterReading();
+
+                $emailLink.removeClass('hidden');
+                $emailLink.off('click.sendEmail');
+                $emailLink.on('click.sendEmail', () => {
+                    sendEmail(expirationDate, isBurnafterreading);
+                });
+            } catch (error) {
+                console.error(error);
+                Alert.showError('Cannot calculate expiration date.');
+            }
+        }
+
+        /**
+         * hide the "email" button
+         * 
+         * @name   TopNav.hideEmailButton
+         * @function
+         */
+        me.hideEmailButton = function()
+        {
+            $emailLink.addClass('hidden');
+            $emailLink.off('click.sendEmail');
+        }
+
+        /**
          * only hides the clone button
          *
          * @name   TopNav.hideCloneButton
@@ -3696,6 +4052,30 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         {
             $rawTextButton.addClass('hidden');
         };
+
+        /**
+         * only hides the qr code button
+         * 
+         * @name   TopNav.hideQrCodeButton
+         * @function
+         */
+        me.hideQrCodeButton = function()
+        {
+            $qrCodeLink.addClass('hidden');
+        }
+
+        /**
+         * hide all irrelevant buttons when viewing burn after reading paste
+         * 
+         * @name   TopNav.hideBurnAfterReadingButtons
+         * @function
+         */
+        me.hideBurnAfterReadingButtons = function()
+        {
+            me.hideCloneButton();
+            me.hideQrCodeButton();
+            me.hideEmailButton();
+        }
 
         /**
          * hides the file selector in attachment
@@ -3784,7 +4164,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         /**
          * returns the state of the burn after reading checkbox
          *
-         * @name   TopNav.getExpiration
+         * @name   TopNav.getBurnAfterReading
          * @function
          * @return {bool}
          */
@@ -3814,7 +4194,8 @@ jQuery.PrivateBin = (function($, RawDeflate) {
          */
         me.getPassword = function()
         {
-            return $passwordInput.val();
+            // when password is disabled $passwordInput.val() will return undefined
+            return $passwordInput.val() || '';
         };
 
         /**
@@ -3913,6 +4294,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             $retryButton = $('#retrybutton');
             $sendButton = $('#sendbutton');
             $qrCodeLink = $('#qrcodelink');
+            $emailLink = $('#emaillink');
 
             // bootstrap template drop down
             $('#language ul.dropdown-menu li a').click(setLanguage);
@@ -4257,6 +4639,10 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             history.pushState({type: 'newpaste'}, document.title, url);
 
             TopNav.showViewButtons();
+
+            // this cannot be grouped with showViewButtons due to remaining time calculation
+            TopNav.showEmailButton();
+
             TopNav.hideRawButton();
             Editor.hide();
 
@@ -4648,7 +5034,6 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                         plaintexts[i][1]
                     );
                 }
-                DiscussionViewer.finishDiscussion();
             });
         }
 
@@ -4697,8 +5082,17 @@ jQuery.PrivateBin = (function($, RawDeflate) {
 
                     // discourage cloning (it cannot really be prevented)
                     if (paste.isBurnAfterReadingEnabled()) {
-                        TopNav.hideCloneButton();
+                        TopNav.hideBurnAfterReadingButtons();
+                    } else {
+                        // we have to pass in remaining_time here
+                        TopNav.showEmailButton(paste.getTimeToLive());
                     }
+
+                    // only offer adding comments, after paste was successfully decrypted
+                    if (paste.isDiscussionEnabled()) {
+                        DiscussionViewer.finishDiscussion();
+                    }
+
                 })
                 .catch((err) => {
                     // wait for the user to type in the password,
@@ -4911,7 +5305,17 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             // first load translations
             I18n.loadTranslations();
 
-            DOMPurify.setConfig({SAFE_FOR_JQUERY: true});
+            DOMPurify.setConfig({
+                ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|magnet):)/i,
+                SAFE_FOR_JQUERY: true
+            });
+
+            // center all modals
+            $('.modal').on('show.bs.modal', function(e) {
+                $(e.target).css({
+                    display: 'flex'
+                });
+            });
 
             // initialize other modules/"classes"
             Alert.init();

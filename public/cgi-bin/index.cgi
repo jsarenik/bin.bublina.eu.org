@@ -71,6 +71,10 @@ exit
 test "$REQUEST_METHOD" = "GET" -a -z "$pasteid" && {
   echo "Content-Type: text/html; charset=UTF-8"
   echo
+  echo "<!DOCTYPE html>"
+  eval $(echo "$HTTP_COOKIE" | grep -o '[a-zA-Z][[:alnum:]]*=[[:alnum:]]\+')
+  test -n "$lang" && lang=" lang=\"$lang\""
+  echo "<html$lang>"
   exec cat $HERE/a.html
 }
 
