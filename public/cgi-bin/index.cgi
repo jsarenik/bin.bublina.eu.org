@@ -23,14 +23,20 @@ test -r $LIMIT && {
   LAST=$(stat -c "%Y" $LIMIT)
   test $((NOW-LAST)) -le 10 && {
     echo "{\"status\":1,\"message\":\"Please wait 10 seconds between each post.\"}"
-    exit
+    exit 1
   }
 } || test -d $WHERE/limit || mkdir $WHERE/limit
 touch $LIMIT
 #id=d0c8d91aa2b718dc
 dt=$(genrandom 4)
 TMP=$(mktemp)
-grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $TMP
+MAXSIZE=1m
+head -qc $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $TMP
+head -qc 1 | grep . && {
+    cat > /dev/null
+    echo "{\"status\":1,\"message\":\"Maximum file size is $MAXSIZE.\"}"
+    exit 1
+}
 if
   P=$(grep '^"pasteid":' $TMP)
 then
