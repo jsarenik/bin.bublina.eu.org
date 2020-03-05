@@ -1,0 +1,3 @@
+Add to Cron:
+
+/busybox/find /tmp/bin/limit -mmin +1 -delete
