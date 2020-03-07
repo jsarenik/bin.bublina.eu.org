@@ -25,6 +25,9 @@ $MYHOST {
 }
 EOF
 #./genmin.sh
+cd gen
+./gen.sh
+cd -
 test -d /tmp/bin/limit || mkdir -p /tmp/bin/limit
 httpd -c $HERE/httpd.conf \
   -fvv -p 127.0.0.1:$PORT \
