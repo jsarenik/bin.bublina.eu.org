@@ -3,8 +3,9 @@
 wget -O gen/index.html http://127.0.0.1:8890/index.php
 
 mkdown() {
-  mkdir -p public/${1%/*}
-  wget -O public/${1%\?*} http://127.0.0.1:8890/$1
+  a=/$1
+  mkdir -p public/${a%/*}
+  wget -O public/${a%\?*} http://127.0.0.1:8890/$a
 }
 
 catit() {
