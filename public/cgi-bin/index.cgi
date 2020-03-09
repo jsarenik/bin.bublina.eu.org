@@ -34,6 +34,7 @@ MAXSIZE=1m
 head -c $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $TMP
 head -c 1 | grep -q . && {
     echo "{\"status\":1,\"message\":\"Maximum file size is $MAXSIZE.\"}"
+    rm $TMP
     exit 1
 }
 if
