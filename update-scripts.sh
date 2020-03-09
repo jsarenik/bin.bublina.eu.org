@@ -1,6 +1,9 @@
 #!/bin/sh
 
-wget -O gen/index.html http://127.0.0.1:8890/index.php
+wget -O - http://127.0.0.1:8890/index.php \
+  | sed 's/integrity="[^"]\+" //g' \
+  > gen/index.html
+
 
 mkdown() {
   a=/$1
@@ -25,3 +28,8 @@ catit \
   | cut -b7- \
   | while read a
 do mkdown $a; done
+
+sed -i \
+  -e '/^\s\+\/\*\*$/N;/^\s\+\/\*\*\n\s\+\* attaches the clipboard attachment handler/,/^        }$/{N;N;d}' \
+  -e '/^\s\+addClipboardEventHandler();$/d' \
+  public/js/privatebin.js
