@@ -31,8 +31,8 @@ touch $LIMIT
 dt=$(genrandom 4)
 TMP=$(mktemp)
 MAXSIZE=1m
-head -qc $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $TMP
-head -qc 1 | grep . && {
+head -c $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $TMP
+head -c 1 | grep -q . && {
     cat > /dev/null
     echo "{\"status\":1,\"message\":\"Maximum file size is $MAXSIZE.\"}"
     exit 1
