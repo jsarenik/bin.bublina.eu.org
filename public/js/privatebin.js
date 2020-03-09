@@ -3110,34 +3110,6 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         }
 
         /**
-         * attaches the clipboard attachment handler to the page
-         *
-         * @name   AttachmentViewer.addClipboardEventHandler
-         * @private
-         * @function
-         */
-        function addClipboardEventHandler() {
-            $(document).on('paste', function (event) {
-                if (TopNav.isAttachmentReadonly()) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    return false;
-                }
-                const items = (event.clipboardData || event.originalEvent.clipboardData).items;
-                for (let i = 0; i < items.length; ++i) {
-                    if (items[i].kind === 'file') {
-                        //Clear the file input:
-                        $fileInput.wrap('<form>').closest('form').get(0).reset();
-                        $fileInput.unwrap();
-
-                        readFileData(items[i].getAsFile());
-                    }
-                }
-            });
-        }
-
-
-        /**
          * getter for attachment data
          *
          * @name   AttachmentViewer.getAttachmentData
@@ -3200,7 +3172,6 @@ jQuery.PrivateBin = (function($, RawDeflate) {
 
                 $fileInput = $('#file');
                 addDragDropHandler();
-                addClipboardEventHandler();
             }
         }
 
