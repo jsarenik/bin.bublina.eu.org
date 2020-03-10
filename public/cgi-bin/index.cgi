@@ -74,7 +74,7 @@ else
   {
   echo CREATED=$NOW
   echo EXPIRES=$EXPIRES
-  test $EXPIRES -gt 0 && echo EXPIRED=$((NOW+EXPIRES))
+  test "$EXPIRES" = "0" || echo EXPIRED=$((NOW+EXPIRES))
   } > $TD/env
   #dt=34e75668370b52182e2b4549ad8305a9dcb8d65ec3b9b39d84b63b200cbb14d7
   dt=$(genrandom 32)
