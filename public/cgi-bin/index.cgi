@@ -95,7 +95,7 @@ test "$REQUEST_METHOD" = "GET" -a -z "$pasteid" && {
   exec cat $HERE/a.html
 }
 
-test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -n "$deletetoken" && {
+test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -n "$deletetoken" -a -r $WHERE/$pasteid/data && {
   echo "Content-Type: text/html; charset=UTF-8"
   echo
   echo "<!DOCTYPE html>"
