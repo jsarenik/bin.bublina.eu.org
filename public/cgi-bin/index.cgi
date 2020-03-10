@@ -17,7 +17,7 @@ test "$REQUEST_METHOD" = "POST" -a -z "$pasteid" && {
 echo "Content-Type: application/json; charset=UTF-8"
 echo
 NOW=$(date +%s)
-test -n "$HTTP_X_REAL_IP" || HTTP_X_REAL_IP=$REMOTE_ADDR
+HTTP_X_REAL_IP=${HTTP_X_REAL_IP:-"$REMOTE_ADDR"}
 # Limit number of seconds from last POST attempt
 LIMITS=10
 LIMIT=$WHERE/.limit/$(echo $HTTP_X_REAL_IP | tr -d '.:[]')
