@@ -27,7 +27,6 @@ LAST=$(stat -c "%Y" $LIMIT; R=$?; touch $LIMIT; exit $R) && {
     exit 1
   }
 }
-#id=d0c8d91aa2b718dc
 TMP=$(mktemp)
 MAXSIZE=1m
 head -c $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' \
@@ -57,6 +56,7 @@ then
   echo "{\"status\":0,\"id\":\"$pasteid\",\"url\":\"/?$pasteid\"}"
 else
   while
+    #id=d0c8d91aa2b718dc
     id=$(genrandom)
     ! mkdir -p $WHERE/$id
   do : ; done
@@ -77,6 +77,7 @@ else
   echo EXPIRES=$EXPIRES
   test $EXPIRES -gt 0 && echo EXPIRED=$((NOW+EXPIRES))
   } > $TD/env
+  #dt=34e75668370b52182e2b4549ad8305a9dcb8d65ec3b9b39d84b63b200cbb14d7
   dt=$(genrandom 32)
   echo DT=$dt > $TD/dt
   echo "{\"status\":0,\"id\":\"$id\",\"url\":\"/?$id\",\"deletetoken\":\"$dt\"}"
