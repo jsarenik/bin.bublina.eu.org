@@ -72,13 +72,6 @@ exit
 
 test "$REQUEST_METHOD" = "GET" -a -z "$pasteid" && {
   echo "Content-Type: text/html; charset=UTF-8"
-  echo "cache-control: no-store, no-cache, no-transform, must-revalidate"
-  echo "content-security-policy: default-src 'none'; manifest-src 'self'; connect-src * blob:; script-src 'self' 'unsafe-eval'; style-src 'self'; font-src 'self'; img-src 'self' data: blob:; media-src blob:; object-src blob:; sandbox allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
-  echo "content-security-policy: default-src * data: 'unsafe-eval' 'unsafe-inline'"
-  echo "set-cookie: lang=cs"
-  echo "x-content-type-options: nosniff"
-  echo "x-frame-options: DENY"
-  echo "x-xss-protection: 1; mode=block"
   echo
   echo "<!DOCTYPE html>"
   eval $(echo "$HTTP_COOKIE" | grep -o '[a-zA-Z][[:alnum:]]*=[[:alnum:]]\+')

@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "Content-Type: application/json"
+echo "Content-Type: application/json; charset=UTF-8"
 echo "Set-Cookie: lang=cs"
 echo
 cat <<EOF
