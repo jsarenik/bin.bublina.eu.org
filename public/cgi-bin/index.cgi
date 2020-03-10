@@ -7,8 +7,8 @@ WHERE=/tmp/bin
 eval $(echo "$QUERY_STRING" | grep -o '[a-zA-Z][[:alnum:]]*=[-[:alnum:]/_+%]\+')
 
 genrandom(){
-  BYTES=${1:-1}
-  dd if=/dev/random bs=8 count=$BYTES 2>/dev/null \
+  BYTES=${1:-8}
+  head -c $BYTES /dev/random \
     | od -A n -t x1 \
     | tr -d ' \n'
 }
@@ -28,7 +28,7 @@ test -r $LIMIT && {
 } || test -d $WHERE/.limit || mkdir $WHERE/.limit
 touch $LIMIT
 #id=d0c8d91aa2b718dc
-dt=$(genrandom 4)
+dt=$(genrandom 32)
 TMP=$(mktemp)
 MAXSIZE=1m
 head -c $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' \
