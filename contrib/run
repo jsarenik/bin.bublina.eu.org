@@ -1,8 +1,9 @@
 #!/bin/sh
 
-test -d /tmp/bin || mkdir /tmp/bin
-mountpoint /tmp/bin || mount -t tmpfs -o size=10M tmpfs /tmp/bin
-chown -R nobody /tmp/bin
+WHERE=/tmp/bin
+test -d $WHERE/.limit || mkdir -p $WHERE/.limit
+mountpoint $WHERE || mount -t tmpfs -o size=10M tmpfs $WHERE
+chown -R nobody $WHERE
 CLOCKDIR=/home/nisim/web/bin
 exec </dev/null
 exec 2>&1
@@ -10,4 +11,4 @@ exec /busybox/httpd -f \
   -c $CLOCKDIR/httpd.conf \
   -h $CLOCKDIR/public \
   -u nobody \
-  -p 127.0.0.1:8899
+  -p 8899

@@ -2,6 +2,7 @@
 
 a="/$0"; a=${a%/*}; a=${a:-.}; a=${a#/}/; HERE=$(cd $a; pwd)
 cd $HERE
+WHERE=/tmp/bin
 PORT=${1:-"8890"}
 MYHOST=${2:-"bin.bublina.eu.org"}
 {
@@ -28,6 +29,7 @@ EOF
 cd gen
 ./gen.sh
 cd -
+test -d $WHERE/.limit || mkdir -p $WHERE/.limit
 httpd -c $HERE/httpd.conf \
   -fvv -p 127.0.0.1:$PORT \
   -h $HERE/public

@@ -18,15 +18,17 @@ echo "Content-Type: application/json; charset=UTF-8"
 echo
 NOW=$(date +%s)
 test -n "$HTTP_X_REAL_IP" || HTTP_X_REAL_IP=$REMOTE_ADDR
+# Limit number of seconds from last POST attempt
+LIMITS=10
 LIMIT=$WHERE/.limit/$(echo $HTTP_X_REAL_IP | tr -d '.:[]')
 test -r $LIMIT && {
   LAST=$(stat -c "%Y" $LIMIT)
-  test $((NOW-LAST)) -le 10 && {
-    echo "{\"status\":1,\"message\":\"Please wait 10 seconds between each post.\"}"
+  touch $LIMIT
+  test $((NOW-LAST)) -le $LIMITS && {
+    echo "{\"status\":1,\"message\":\"Please wait $LIMITS seconds between each post. Counter is reset on every retry.\"}"
     exit 1
   }
-} || test -d $WHERE/.limit || mkdir $WHERE/.limit
-touch $LIMIT
+} || touch $LIMIT
 #id=d0c8d91aa2b718dc
 TMP=$(mktemp)
 MAXSIZE=1m
