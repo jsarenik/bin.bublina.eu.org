@@ -47,8 +47,7 @@ then
   TD=$WHERE/$pasteid
   ND=$TD/comment
   while ! mkdir -p $ND/.lock; do sleep 0.1; done
-  test -r $TD/next && next=$(cat $TD/next) || next=1
-  test -d $ND || mkdir $ND
+  next=$(cat $TD/next) || { next=1; mkdir $ND; }
   mv $TMP $ND/$next
   rm -rf $TMP*
   echo $((next+1)) > $TD/next
