@@ -1,7 +1,9 @@
 #!/bin/sh
 
 wget -O - http://127.0.0.1:8890/index.php \
-  | sed 's/integrity="[^"]\+" //g' \
+  | sed \
+    -e 's/integrity="[^"]\+" //g' \
+    -e '1,2d' \
   > gen/index.html
 
 
