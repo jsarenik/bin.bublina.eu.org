@@ -1,6 +1,6 @@
 Add to Cron:
 
-/busybox/find /tmp/bin/limit -mmin +1 -delete
+/busybox/find /tmp/bin/.limit -mmin +1 -delete
 
 cookies
 https://stackoverflow.com/questions/1134290/cookies-on-localhost-with-explicit-domain

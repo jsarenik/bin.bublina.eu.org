@@ -18,14 +18,14 @@ echo "Content-Type: application/json; charset=UTF-8"
 echo
 NOW=$(date +%s)
 test -n "$HTTP_X_REAL_IP" || HTTP_X_REAL_IP=$REMOTE_ADDR
-LIMIT=$WHERE/limit/$(echo $HTTP_X_REAL_IP | tr -d '.:[]')
+LIMIT=$WHERE/.limit/$(echo $HTTP_X_REAL_IP | tr -d '.:[]')
 test -r $LIMIT && {
   LAST=$(stat -c "%Y" $LIMIT)
   test $((NOW-LAST)) -le 10 && {
     echo "{\"status\":1,\"message\":\"Please wait 10 seconds between each post.\"}"
     exit 1
   }
-} || test -d $WHERE/limit || mkdir $WHERE/limit
+} || test -d $WHERE/.limit || mkdir $WHERE/.limit
 touch $LIMIT
 #id=d0c8d91aa2b718dc
 dt=$(genrandom 4)
