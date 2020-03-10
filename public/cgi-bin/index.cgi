@@ -31,10 +31,14 @@ touch $LIMIT
 dt=$(genrandom 4)
 TMP=$(mktemp)
 MAXSIZE=1m
-head -c $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' | sed 's/^{//;s/}$//' > $TMP
+head -c $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' \
+  | sed 's/^{//;s/}$//' \
+  | tee $TMP-meta \
+  | grep -v '^"meta":' \
+  > $TMP
 head -c 1 | grep -q . && {
     echo "{\"status\":1,\"message\":\"Maximum file size is $MAXSIZE.\"}"
-    rm $TMP
+    rm -rf $TMP*
     exit 1
 }
 if
@@ -48,6 +52,7 @@ then
   test -r $TD/next && next=$(cat $TD/next) || next=1
   test -d $ND || mkdir $ND
   mv $TMP $ND/$next
+  rm -rf $TMP*
   echo $((next+1)) > $TD/next
   rmdir $ND/.lock
   echo "{\"status\":0,\"id\":\"$pasteid\",\"url\":\"/?$pasteid\"}"
@@ -58,7 +63,8 @@ else
   do : ; done
   TD=$WHERE/$id
   mv $TMP $TD/data
-  EXPIRE=$(grep -o '"expire":"[^"]\+"' $TD/data | cut -b11-14)
+  EXPIRE=$(grep -o '"expire":"[^"]\+"' $TMP-meta | cut -b11-14)
+  rm -rf $TMP*
   tneve=0
   t5min=300
   t10mi=600
@@ -113,13 +119,12 @@ test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -r $WHERE/$pasteid/data && {
   # Following line is not needed because TTL will be negative
   # when EXPIRES is 0
   #test $EXPIRES -eq 0 && TTL=0
-  DATA=$(grep -v '^"meta":' $TD/data | tr -d '\n')
   echo "\
 {\
 \"status\":0,\
 \"id\":\"$pasteid\",\
 \"url\":\"/?$pasteid\",\
-$DATA,\
+$(cat $TD/data),\
 \"meta\":{\"created\":$CREATED,\"time_to_live\":$TTL},"
 
 if
