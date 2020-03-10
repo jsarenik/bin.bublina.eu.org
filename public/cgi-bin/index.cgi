@@ -158,7 +158,7 @@ echo "]}"
 fi
 
 
-  echo $DATA | grep -oqF '0,1]' && rm -rf $TD
+  grep -oqF '0,1]' $TD/data && rm -rf $TD
   exit
 }
 
