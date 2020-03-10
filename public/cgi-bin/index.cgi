@@ -58,9 +58,20 @@ else
   do : ; done
   TD=$WHERE/$id
   mv $TMP $TD/data
+  EXPIRE=$(grep -o '"expire":"[^"]\+"' $TD/data | cut -b11-14)
+  tneve=0
+  t5min=300
+  t10mi=600
+  t1hou=3600
+  t1wee=604800
+  t1mon=2592000
+  t1yea=31536000
+  eval EXPIRES=$(echo \$t$EXPIRE)
   {
   echo CREATED=$NOW
   echo DT=$dt
+  echo EXPIRES=$EXPIRES
+  echo EXPIRED=$((NOW+EXPIRES))
   } > $TD/env
   echo "{\"status\":0,\"id\":\"$id\",\"url\":\"/?$id\",\"deletetoken\":\"$dt\"}"
 fi
@@ -98,19 +109,10 @@ test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -r $WHERE/$pasteid/data && {
   NOW=$(date +%s)
   TD=$WHERE/$pasteid
   . $TD/env
-  EXPIRE=$(grep -o '"expire":"[^"]\+"' $TD/data | tr -d '"' | cut -b8-11)
-  tneve=0
-  t5min=300
-  t10mi=600
-  t1hou=3600
-  t1wee=604800
-  t1mon=2592000
-  t1yea=31536000
-  eval EXPIRE=$(echo \$t$EXPIRE)
-  TTL=$((CREATED+EXPIRE-NOW))
+  TTL=$((CREATED+EXPIRES-NOW))
   # Following line is not needed because TTL will be negative
-  # when EXPIRE is 0
-  #test $EXPIRE -eq 0 && TTL=0
+  # when EXPIRES is 0
+  #test $EXPIRES -eq 0 && TTL=0
   DATA=$(grep -v '^"meta":' $TD/data | tr -d '\n')
   echo "\
 {\
