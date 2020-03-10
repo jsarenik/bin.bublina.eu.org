@@ -77,7 +77,7 @@ else
   echo CREATED=$NOW
   echo DT=$dt
   echo EXPIRES=$EXPIRES
-  echo EXPIRED=$((NOW+EXPIRES))
+  test $EXPIRES -gt 0 && echo EXPIRED=$((NOW+EXPIRES))
   } > $TD/env
   echo "{\"status\":0,\"id\":\"$id\",\"url\":\"/?$id\",\"deletetoken\":\"$dt\"}"
 fi
