@@ -28,7 +28,6 @@ test -r $LIMIT && {
 } || test -d $WHERE/.limit || mkdir $WHERE/.limit
 touch $LIMIT
 #id=d0c8d91aa2b718dc
-dt=$(genrandom 32)
 TMP=$(mktemp)
 MAXSIZE=1m
 head -c $MAXSIZE | grep -o '[^,]\+:[^:]\+[,}]' \
@@ -75,10 +74,11 @@ else
   eval EXPIRES=$(echo \$t$EXPIRE)
   {
   echo CREATED=$NOW
-  echo DT=$dt
   echo EXPIRES=$EXPIRES
   test $EXPIRES -gt 0 && echo EXPIRED=$((NOW+EXPIRES))
   } > $TD/env
+  dt=$(genrandom 32)
+  echo DT=$dt > $TD/dt
   echo "{\"status\":0,\"id\":\"$id\",\"url\":\"/?$id\",\"deletetoken\":\"$dt\"}"
 fi
 
@@ -104,6 +104,7 @@ test "$REQUEST_METHOD" = "GET" -a -n "$pasteid" -a -n "$deletetoken" && {
   echo "<html$lang>"
   TD=$WHERE/$pasteid
   . $TD/env
+  . $TD/dt
   test "$deletetoken" = "$DT" \
     && { rm -rf $TD; exec cat $HERE/b.html; } \
     || exec cat $HERE/notdeleted.html
