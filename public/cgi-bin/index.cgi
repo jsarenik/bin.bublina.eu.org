@@ -47,11 +47,12 @@ then
   TD=$WHERE/$pasteid
   ND=$TD/comment
   while ! mkdir -p $ND/.lock; do sleep 0.1; done
-  next=$(cat $TD/next) || { next=1; mkdir $ND; }
-  mv $TMP $ND/$next
-  rm -rf $TMP*
-  echo $((next+1)) > $TD/next
+  ID=$(md5sum $TMP | cut -b-16)
+  mv $TMP $ND/$ID
+  echo ",\"meta\":{\"created\":$NOW,\"icon\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAABnRSTlMAAAAAAABupgeRAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAQ0lEQVQokWNkgAGHBQkMuMGBhAUMDAxMeFRgAlqqZsQUQvYAxLkUm01+mBxIWIDmBnJcwoJVFJeraBom+IMCDdAy5gEFVRIcKzO8OgAAAABJRU5ErkJggg==\"},\"id\":\"$ID\"" \
+    >> $ND/$ID
   rmdir $ND/.lock
+  rm -rf $TMP*
   echo "{\"status\":0,\"id\":\"$pasteid\",\"url\":\"/?$pasteid\"}"
 else
   while
@@ -138,20 +139,17 @@ then
 \"@context\":\"?jsonld=paste\"\
 }"
 else
-NUM=$(cat $TD/next)
-NUM=$((NUM-1))
+COMMENTS=$(ls -rt $TD/comment)
+NUM=$(echo $COMMENTS | wc -w)
 echo "\
 \"comment_count\":$NUM,\
 \"comment_offset\":0,\
 \"@context\":\"?jsonld=paste\",\
 \"comments\":["
-for i in $(seq $NUM)
+for i in $COMMENTS
 do
-  CREATED=$(stat -c "%Y" $TD/comment/$i)
-  ID=$(md5sum $TD/comment/$i | cut -b-16)
-  test $i -eq 1 && echo "{" || echo ",{"
+  test "$A" != "1" && { echo "{"; A=1; } || echo ",{"
   cat $TD/comment/$i
-  echo ",\"meta\":{\"created\":$CREATED,\"icon\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAIAAAC0tAIdAAAABnRSTlMAAAAAAABupgeRAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAQ0lEQVQokWNkgAGHBQkMuMGBhAUMDAxMeFRgAlqqZsQUQvYAxLkUm01+mBxIWIDmBnJcwoJVFJeraBom+IMCDdAy5gEFVRIcKzO8OgAAAABJRU5ErkJggg==\"},\"id\":\"$ID\""
   echo "}"
 done
 echo "]}"
