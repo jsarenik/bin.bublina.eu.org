@@ -29,7 +29,9 @@ EOF
 cd gen
 ./gen.sh
 cd -
-test -d $WHERE/.limit || mkdir -p $WHERE/.limit
+test -d $WHERE || mkdir -p $WHERE
+# This is a hack to disable limit for local testing
+rm -rf $WHERE/.limit; touch $WHERE/.limit
 httpd -c $HERE/httpd.conf \
   -fvv -p 127.0.0.1:$PORT \
   -h $HERE/public
