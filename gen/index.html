@@ -5,8 +5,8 @@
 		<meta name="robots" content="noindex" />
 		<meta name="google" content="notranslate">
 		<title>PrivateBin</title>
+		<link type="text/css" rel="stylesheet" href="css/bootstrap/bootstrap-3.4.1.css" />
 		<link type="text/css" rel="stylesheet" href="css/bootstrap/bootstrap-theme-3.4.1.css" />
-		<link type="text/css" rel="stylesheet" href="css/bootstrap/darkstrap-0.9.3.css" />
 		<link type="text/css" rel="stylesheet" href="css/bootstrap/privatebin.css?1.3.3" />
 		<link type="text/css" rel="stylesheet" href="css/prettify/prettify.css?1.3.3" />
 		<noscript><link type="text/css" rel="stylesheet" href="css/noscript.css" /></noscript>
@@ -30,7 +30,7 @@
 		<meta name="msapplication-config" content="browserconfig.xml">
 		<meta name="theme-color" content="#ffe57e" />
 	</head>
-	<body role="document" data-compression="zlib" class="dark-theme">
+	<body role="document" data-compression="zlib">
 		<div id="passwordmodal" tabindex="-1" class="modal fade" role="dialog" aria-hidden="true">
 			<div class="modal-dialog" role="document">
 				<div class="modal-content">
@@ -84,7 +84,7 @@
 				</div>
 			</div>
 		</div>
-		<nav class="navbar navbar-inverse navbar-static-top">			<div class="navbar-header">
+		<nav class="navbar navbar-default navbar-static-top">			<div class="navbar-header">
 				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
 					<span class="sr-only">Toggle navigation</span>
 					<span class="icon-bar"></span>
@@ -102,24 +102,24 @@
 						Loading…
 					</li>
 					<li>
-						<button id="retrybutton" type="button" class="reloadlink hidden btn btn-warning navbar-btn">
+						<button id="retrybutton" type="button" class="reloadlink hidden btn btn-primary navbar-btn">
 							<span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Retry
 						</button>
 					</li>
 					<li>
-						<button id="newbutton" type="button" class="hidden btn btn-warning navbar-btn">
+						<button id="newbutton" type="button" class="hidden btn btn-default navbar-btn">
 							<span class="glyphicon glyphicon-file" aria-hidden="true"></span> New
 						</button>
-						<button id="clonebutton" type="button" class="hidden btn btn-warning navbar-btn">
+						<button id="clonebutton" type="button" class="hidden btn btn-default navbar-btn">
 							<span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span> Clone
 						</button>
-						<button id="rawtextbutton" type="button" class="hidden btn btn-warning navbar-btn">
+						<button id="rawtextbutton" type="button" class="hidden btn btn-default navbar-btn">
 							<span class="glyphicon glyphicon-text-background" aria-hidden="true"></span> Raw text
 						</button>
-						<button id="emaillink" type="button" class="hidden btn btn-warning navbar-btn">
+						<button id="emaillink" type="button" class="hidden btn btn-default navbar-btn">
 							<span class="glyphicon glyphicon-envelope" aria-hidden="true"></span> Email
 						</button>
-						<button id="qrcodelink" type="button" data-toggle="modal" data-target="#qrcodemodal" class="hidden btn btn-warning navbar-btn">
+						<button id="qrcodelink" type="button" data-toggle="modal" data-target="#qrcodemodal" class="hidden btn btn-default navbar-btn">
 							<span class="glyphicon glyphicon-qrcode" aria-hidden="true"></span> QR code
 						</button>
 					</li>
@@ -265,7 +265,7 @@
 					
 				</div>
 				<noscript>
-					<div id="noscript" role="alert" class="alert alert-error">
+					<div id="noscript" role="alert" class="alert alert-warning">
 						<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
 						JavaScript is required for PrivateBin to work. Sorry for the inconvenience.
 					</div>
@@ -298,7 +298,7 @@
 					<li role="presentation" class="active"><a role="tab" aria-selected="true" aria-controls="editorTabs" id="messageedit" href="#">Editor</a></li>
 					<li role="presentation"><a role="tab" aria-selected="false" aria-controls="editorTabs" id="messagepreview" href="#">Preview</a></li>
 					<li role="presentation" class="pull-right">
-						<button id="sendbutton" type="button" class="hidden btn btn-warning">
+						<button id="sendbutton" type="button" class="hidden btn btn-primary">
 							<span class="glyphicon glyphicon-upload" aria-hidden="true"></span> Send
 						</button>
 					</li>
