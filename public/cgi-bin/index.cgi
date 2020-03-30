@@ -10,7 +10,7 @@ test "$QUERY_STRING" = "" \
 # Use just first letter of HTTP_ACCEPT - either 'a' or 't'
 #  HTTP_ACCEPT='text/html...
 #  HTTP_ACCEPT='application/javascript...
-HTA="$(echo $HTTP_ACCEPT | head -c1)$REQUEST_METHOD"
+HTA=${HTTP_ACCEPT%${HTTP_ACCEPT#?}}${REQUEST_METHOD}
 O=""
 test "$pasteid" = "" || {
   test -r $WHERE/$pasteid/data && { O=p; test "$deletetoken" = "" || O=d; }
