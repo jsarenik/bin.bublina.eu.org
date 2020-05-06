@@ -1,0 +1,23 @@
+# This is for Caddy2
+
+bin.bublina.eu.org {
+  root * /home/nisim/web/bin/public
+  encode zstd gzip
+  file_server
+  header {
+    Strict-Transport-Security "max-age=31536000;"
+  }
+  @static {
+    path /css/* /js/* /img/* /robots.txt /browserconfig.xml
+  }
+  handle @static {
+    header Cache-Control "max-age=31536000"
+  }
+  # busybox httpd is running on port 8899 here
+  handle /* {
+    reverse_proxy /* http://127.0.0.1:8899 {
+      # header used in public/cgi-bin/aPOST.sh
+      header_up X-Real-IP {remote_host}
+    }
+  }
+}
