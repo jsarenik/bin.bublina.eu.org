@@ -1,14 +1,16 @@
 # bin.bublina.eu.org
 Minimalist POSIX shell reimplementation of PrivateBin
 
-See https://bin.bublina.eu.org or http://roep6uguk4gv7grlnoc3swz4uomu572ho2x6byzxpp6wfisdfjywe6qd.onion whereas
-the former [is front-served by Caddy2](contrib/Caddyfile)
-and the latter (onion link) goes straight to [`busybox httpd` served site](contrib/run).
+See https://bin.bublina.eu.org
+or http://roep6uguk4gv7grlnoc3swz4uomu572ho2x6byzxpp6wfisdfjywe6qd.onion
+whereas the former [is front-served by Caddy2](contrib/Caddyfile)
+and the latter (onion link) goes straight to
+[`busybox httpd` served site](contrib/run).
 
 Notable differences to PrivateBin:
 
-  - i18n not enabled yet
-  - cleanup of TTL pastebins not implemented yet
+  - i18n not working yet - not important
+  - [correct cleanup of TTL pastebins not implemented yet](contrib/cleanup.sh)
 
 What works:
 
