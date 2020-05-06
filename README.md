@@ -18,3 +18,14 @@ What works:
   - [rate limiting](public/cgi-bin/aPOST.sh#L14)
   - [size limit](public/cgi-bin/aPOST.sh#L26-L35)
   - [comments with static avatar for all](public/cgi-bin/aPOST.sh#L38-L50)
+
+## How to upgrade to current PrivateBin
+
+ 1. Clone the current PrivateBin repo.
+ 2. Add my branch [jsn/local-httpd](https://github.com/jsarenik/PrivateBin/tree/jsn/local-httpd), rebase to master of PrivateBin if needed
+ 3. Run `./run-site.sh` (requires BusyBox' `httpd` and `php`)
+    and keep it running.
+ 4. Clone [this repo](https://github.com/jsarenik/bin.bublina.eu.org)
+    elsewhere.
+ 5. Inside the cloned `bin.bublina.eu.org` directory
+    run `./update-scripts.sh`.
