@@ -244,6 +244,18 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         const day = 86400;
 
         /**
+         * number of seconds in a week
+         *
+         * = 60 * 60 * 24 * 7 seconds
+         *
+         * @name Helper.week
+         * @private
+         * @enum   {number}
+         * @readonly
+         */
+        const week = 604800;
+
+        /**
          * number of seconds in a month (30 days, an approximation)
          *
          * = 60 * 60 * 24 * 30 seconds
@@ -326,7 +338,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
          */
         me.durationToSeconds = function(duration)
         {
-            let pieces   = duration.split(/\d+/),
+            let pieces   = duration.split(/(\D+)/),
                 factor   = pieces[0] || 0,
                 timespan = pieces[1] || pieces[0];
             switch (timespan)
@@ -337,6 +349,8 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                     return factor * hour;
                 case 'day':
                     return factor * day;
+                case 'week':
+                    return factor * week;
                 case 'month':
                     return factor * month;
                 case 'year':
@@ -391,9 +405,11 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         me.urls2links = function(element)
         {
             element.html(
-                element.html().replace(
-                    /(((https?|ftp):\/\/[\w?!=&.\/-;#@~%+*-]+(?![\w\s?!&.\/;#~%"=-]>))|((magnet):[\w?=&.\/-;#@~%+*-]+))/ig,
-                    '<a href="$1" rel="nofollow">$1</a>'
+                DOMPurify.sanitize(
+                    element.html().replace(
+                        /(((https?|ftp):\/\/[\w?!=&.\/-;#@~%+*-]+(?![\w\s?!&.\/;#~%"=-]>))|((magnet):[\w?=&.\/-;#@~%+*-]+))/ig,
+                        '<a href="$1" rel="nofollow noopener noreferrer">$1</a>'
+                    )
                 )
             );
         };
@@ -585,7 +601,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
          * @prop   {string[]}
          * @readonly
          */
-        const supportedLanguages = ['bg', 'cs', 'de', 'es', 'fr', 'it', 'hu', 'no', 'nl', 'pl', 'pt', 'oc', 'ru', 'sl', 'uk', 'zh'];
+        const supportedLanguages = ['bg', 'cs', 'de', 'es', 'fr', 'he', 'hu', 'it', 'lt', 'no', 'nl', 'pl', 'pt', 'oc', 'ru', 'sl', 'uk', 'zh'];
 
         /**
          * built in language
@@ -766,6 +782,10 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                 case 'oc':
                 case 'zh':
                     return n > 1 ? 1 : 0;
+                case 'he':
+                    return n === 1 ? 0 : (n === 2 ? 1 : ((n < 0 || n > 10) && (n % 10 === 0) ? 2 : 3));
+                case 'lt':
+                    return n % 10 === 1 && n % 100 !== 11 ? 0 : ((n % 10 >= 2 && n % 100 < 10 || n % 100 >= 20) ? 1 : 2);
                 case 'pl':
                     return n === 1 ? 0 : (n % 10 >= 2 && n %10 <=4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2);
                 case 'ru':
@@ -1975,15 +1995,11 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                             return a.length - b.length;
                         })[0];
                         if (typeof shortUrl === 'string' && shortUrl.length > 0) {
-                            I18n._(
-                                $('#pastelink'),
-                                'Your paste is <a id="pasteurl" href="%s">%s</a> <span id="copyhint">(Hit [Ctrl]+[c] to copy)</span>',
-                                shortUrl, shortUrl
-                            );
                             // we disable the button to avoid calling shortener again
                             $shortenButton.addClass('buttondisabled');
-                            // save newly created element
-                            $pasteUrl = $('#pasteurl');
+                            // update link
+                            $pasteUrl.text(shortUrl);
+                            $pasteUrl.prop('href', shortUrl);
                             // we pre-select the link so that the user only has to [Ctrl]+[c] the link
                             Helper.selectText($pasteUrl[0]);
                             return;
@@ -2404,7 +2420,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         /**
          * hides the Editor
          *
-         * @name   Editor.reset
+         * @name   Editor.hide
          * @function
          */
         me.hide = function()
@@ -2751,7 +2767,8 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             // extract mediaType
             const mediaType = attachmentData.substring(5, mediaTypeEnd);
             // extract data and convert to binary
-            const decodedData = atob(attachmentData.substring(base64Start));
+            const rawData = attachmentData.substring(base64Start);
+            const decodedData = rawData.length > 0 ? atob(rawData) : '';
 
             // Transform into a Blob
             const buf = new Uint8Array(decodedData.length);
@@ -3101,553 +3118,6 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             });
         }
 
-        /**
-         * getter for attachment data
-         *
-         * @name   AttachmentViewer.getAttachmentData
-         * @function
-         * @return {jQuery}
-         */
-        me.getAttachmentData = function () {
-            return attachmentData;
-        };
-
-        /**
-         * getter for attachment link
-         *
-         * @name   AttachmentViewer.getAttachmentLink
-         * @function
-         * @return {jQuery}
-         */
-        me.getAttachmentLink = function () {
-            return $attachmentLink;
-        };
-
-        /**
-         * getter for attachment preview
-         *
-         * @name   AttachmentViewer.getAttachmentPreview
-         * @function
-         * @return {jQuery}
-         */
-        me.getAttachmentPreview = function () {
-            return $attachmentPreview;
-        };
-
-        /**
-         * getter for file data, returns the file contents
-         *
-         * @name   AttachmentViewer.getFile
-         * @function
-         * @return {string}
-         */
-        me.getFile = function () {
-            return file;
-        };
-
-        /**
-         * initiate
-         *
-         * preloads jQuery elements
-         *
-         * @name   AttachmentViewer.init
-         * @function
-         */
-        me.init = function()
-        {
-            $attachment = $('#attachment');
-            $dragAndDropFileName = $('#dragAndDropFileName');
-            $dropzone = $('#dropzone');
-            $attachmentLink = $('#attachment a') || $('<a>');
-            if($attachment.length) {
-                $attachmentPreview = $('#attachmentPreview');
-
-                $fileInput = $('#file');
-                addDragDropHandler();
-            }
-        }
-
-        return me;
-    })();
-
-    /**
-     * (view) Shows discussion thread and handles replies
-     *
-     * @name   DiscussionViewer
-     * @class
-     */
-    const DiscussionViewer = (function () {
-        const me = {};
-
-        let $commentTail,
-            $discussion,
-            $reply,
-            $replyMessage,
-            $replyNickname,
-            $replyStatus,
-            $commentContainer,
-            replyCommentId;
-
-        /**
-         * initializes the templates
-         *
-         * @name   DiscussionViewer.initTemplates
-         * @private
-         * @function
-         */
-        function initTemplates()
-        {
-            $reply = Model.getTemplate('reply');
-            $replyMessage = $reply.find('#replymessage');
-            $replyNickname = $reply.find('#nickname');
-            $replyStatus = $reply.find('#replystatus');
-
-            // cache jQuery elements
-            $commentTail = Model.getTemplate('commenttail');
-        }
-
-        /**
-         * open the comment entry when clicking the "Reply" button of a comment
-         *
-         * @name   DiscussionViewer.openReply
-         * @private
-         * @function
-         * @param  {Event} event
-         */
-        function openReply(event)
-        {
-            const $source = $(event.target);
-
-            // clear input
-            $replyMessage.val('');
-            $replyNickname.val('');
-
-            // get comment id from source element
-            replyCommentId = $source.parent().prop('id').split('_')[1];
-
-            // move to correct position
-            $source.after($reply);
-
-            // show
-            $reply.removeClass('hidden');
-            $replyMessage.focus();
-
-            event.preventDefault();
-        }
-
-        /**
-         * custom handler for displaying notifications in own status message area
-         *
-         * @name   DiscussionViewer.handleNotification
-         * @function
-         * @param  {string} alertType
-         * @return {bool|jQuery}
-         */
-        me.handleNotification = function(alertType)
-        {
-            // ignore loading messages
-            if (alertType === 'loading') {
-                return false;
-            }
-
-            if (alertType === 'danger') {
-                $replyStatus.removeClass('alert-info');
-                $replyStatus.addClass('alert-danger');
-                $replyStatus.find(':first').removeClass('glyphicon-alert');
-                $replyStatus.find(':first').addClass('glyphicon-info-sign');
-            } else {
-                $replyStatus.removeClass('alert-danger');
-                $replyStatus.addClass('alert-info');
-                $replyStatus.find(':first').removeClass('glyphicon-info-sign');
-                $replyStatus.find(':first').addClass('glyphicon-alert');
-            }
-
-            return $replyStatus;
-        };
-
-        /**
-         * adds another comment
-         *
-         * @name   DiscussionViewer.addComment
-         * @function
-         * @param {Comment} comment
-         * @param {string} commentText
-         * @param {string} nickname
-         */
-        me.addComment = function(comment, commentText, nickname)
-        {
-            if (commentText === '') {
-                commentText = 'comment decryption failed';
-            }
-
-            // create new comment based on template
-            const $commentEntry = Model.getTemplate('comment');
-            $commentEntry.prop('id', 'comment_' + comment.id);
-            const $commentEntryData = $commentEntry.find('div.commentdata');
-
-            // set & parse text
-            $commentEntryData.text(commentText);
-            Helper.urls2links($commentEntryData);
-
-            // set nickname
-            if (nickname.length > 0) {
-                $commentEntry.find('span.nickname').text(nickname);
-            } else {
-                $commentEntry.find('span.nickname').html('<i></i>');
-                I18n._($commentEntry.find('span.nickname i'), 'Anonymous');
-            }
-
-            // set date
-            $commentEntry.find('span.commentdate')
-                      .text(' (' + (new Date(comment.getCreated() * 1000).toLocaleString()) + ')')
-                      .attr('title', 'CommentID: ' + comment.id);
-
-            // if an avatar is available, display it
-            const icon = comment.getIcon();
-            if (icon) {
-                $commentEntry.find('span.nickname')
-                             .before(
-                                '<img src="' + icon + '" class="vizhash" /> '
-                             );
-                $(document).on('languageLoaded', function () {
-                    $commentEntry.find('img.vizhash')
-                                 .prop('title', I18n._('Avatar generated from IP address'));
-                });
-            }
-
-            // starting point (default value/fallback)
-            let $place = $commentContainer;
-
-            // if parent comment exists
-            const $parentComment = $('#comment_' + comment.parentid);
-            if ($parentComment.length) {
-                // use parent as position for new comment, so it is shifted
-                // to the right
-                $place = $parentComment;
-            }
-
-            // finally append comment
-            $place.append($commentEntry);
-        };
-
-        /**
-         * finishes the discussion area after last comment
-         *
-         * @name   DiscussionViewer.finishDiscussion
-         * @function
-         */
-        me.finishDiscussion = function()
-        {
-            // add 'add new comment' area
-            $commentContainer.append($commentTail);
-
-            // show discussions
-            $discussion.removeClass('hidden');
-        };
-
-        /**
-         * removes the old discussion and prepares everything for creating a new
-         * one.
-         *
-         * @name   DiscussionViewer.prepareNewDiscussion
-         * @function
-         */
-        me.prepareNewDiscussion = function()
-        {
-            $commentContainer.html('');
-            $discussion.addClass('hidden');
-
-            // (re-)init templates
-            initTemplates();
-        };
-
-        /**
-         * returns the users message from the reply form
-         *
-         * @name   DiscussionViewer.getReplyMessage
-         * @function
-         * @return {String}
-         */
-        me.getReplyMessage = function()
-        {
-            return $replyMessage.val();
-        };
-
-        /**
-         * returns the users nickname (if any) from the reply form
-         *
-         * @name   DiscussionViewer.getReplyNickname
-         * @function
-         * @return {String}
-         */
-        me.getReplyNickname = function()
-        {
-            return $replyNickname.val();
-        };
-
-        /**
-         * returns the id of the parent comment the user is replying to
-         *
-         * @name   DiscussionViewer.getReplyCommentId
-         * @function
-         * @return {int|undefined}
-         */
-        me.getReplyCommentId = function()
-        {
-            return replyCommentId;
-        };
-
-        /**
-         * highlights a specific comment and scrolls to it if necessary
-         *
-         * @name   DiscussionViewer.highlightComment
-         * @function
-         * @param {string} commentId
-         * @param {bool} fadeOut - whether to fade out the comment
-         */
-        me.highlightComment = function(commentId, fadeOut)
-        {
-            const $comment = $('#comment_' + commentId);
-            // in case comment does not exist, cancel
-            if ($comment.length === 0) {
-                return;
-            }
-
-            $comment.addClass('highlight');
-            const highlightComment = function () {
-                if (fadeOut === true) {
-                    setTimeout(function () {
-                        $comment.removeClass('highlight');
-
-                    }, 300);
-                }
-            };
-
-            if (UiHelper.isVisible($comment)) {
-                return highlightComment();
-            }
-
-            UiHelper.scrollTo($comment, 100, 'swing', highlightComment);
-        };
-
-        /**
-         * initiate
-         *
-         * preloads jQuery elements
-         *
-         * @name   DiscussionViewer.init
-         * @function
-         */
-        me.init = function()
-        {
-            // bind events to templates (so they are later cloned)
-            $('#commenttailtemplate, #commenttemplate').find('button').on('click', openReply);
-            $('#replytemplate').find('button').on('click', PasteEncrypter.sendComment);
-
-            $commentContainer = $('#commentcontainer');
-            $discussion = $('#discussion');
-        };
-
-        return me;
-    })();
-
-    /**
-     * Manage top (navigation) bar
-     *
-     * @name   TopNav
-     * @param  {object} window
-     * @param  {object} document
-     * @class
-     */
-    const TopNav = (function (window, document) {
-        const me = {};
-
-        let createButtonsDisplayed = false,
-            viewButtonsDisplayed = false,
-            $attach,
-            $burnAfterReading,
-            $burnAfterReadingOption,
-            $cloneButton,
-            $customAttachment,
-            $expiration,
-            $fileRemoveButton,
-            $fileWrap,
-            $formatter,
-            $newButton,
-            $openDiscussion,
-            $openDiscussionOption,
-            $password,
-            $passwordInput,
-            $rawTextButton,
-            $qrCodeLink,
-            $emailLink,
-            $sendButton,
-            $retryButton,
-            pasteExpiration = null,
-            retryButtonCallback;
-
-        /**
-         * set the expiration on bootstrap templates in dropdown
-         *
-         * @name   TopNav.updateExpiration
-         * @private
-         * @function
-         * @param  {Event} event
-         */
-        function updateExpiration(event)
-        {
-            // get selected option
-            const target = $(event.target);
-
-            // update dropdown display and save new expiration time
-            $('#pasteExpirationDisplay').text(target.text());
-            pasteExpiration = target.data('expiration');
-
-            event.preventDefault();
-        }
-
-        /**
-         * set the format on bootstrap templates in dropdown from user interaction
-         *
-         * @name   TopNav.updateFormat
-         * @private
-         * @function
-         * @param  {Event} event
-         */
-        function updateFormat(event)
-        {
-            // get selected option
-            const $target = $(event.target);
-
-            // update dropdown display and save new format
-            const newFormat = $target.data('format');
-            $('#pasteFormatterDisplay').text($target.text());
-            PasteViewer.setFormat(newFormat);
-
-            // update preview
-            if (Editor.isPreview()) {
-                PasteViewer.run();
-            }
-
-            event.preventDefault();
-        }
-
-        /**
-         * when "burn after reading" is checked, disable discussion
-         *
-         * @name   TopNav.changeBurnAfterReading
-         * @private
-         * @function
-         */
-        function changeBurnAfterReading()
-        {
-            if ($burnAfterReading.is(':checked')) {
-                $openDiscussionOption.addClass('buttondisabled');
-                $openDiscussion.prop('checked', false);
-
-                // if button is actually disabled, force-enable it and uncheck other button
-                $burnAfterReadingOption.removeClass('buttondisabled');
-            } else {
-                $openDiscussionOption.removeClass('buttondisabled');
-            }
-        }
-
-        /**
-         * when discussion is checked, disable "burn after reading"
-         *
-         * @name   TopNav.changeOpenDiscussion
-         * @private
-         * @function
-         */
-        function changeOpenDiscussion()
-        {
-            if ($openDiscussion.is(':checked')) {
-                $burnAfterReadingOption.addClass('buttondisabled');
-                $burnAfterReading.prop('checked', false);
-
-                // if button is actually disabled, force-enable it and uncheck other button
-                $openDiscussionOption.removeClass('buttondisabled');
-            } else {
-                $burnAfterReadingOption.removeClass('buttondisabled');
-            }
-        }
-
-
-        /**
-         * Clear the attachment input in the top navigation.
-         *
-         * @name   TopNav.clearAttachmentInput
-         * @function
-         */
-        function clearAttachmentInput()
-        {
-            // hide UI for selected files
-            // our up-to-date jQuery can handle it :)
-            $fileWrap.find('input').val('');
-        }
-
-        /**
-         * return raw text
-         *
-         * @name   TopNav.rawText
-         * @private
-         * @function
-         */
-        function rawText()
-        {
-            TopNav.hideAllButtons();
-            Alert.showLoading('Showing raw text…', 'time');
-            let paste = PasteViewer.getText();
-
-            // push a new state to allow back navigation with browser back button
-            history.pushState(
-                {type: 'raw'},
-                document.title,
-                // recreate paste URL
-                Helper.baseUri() + '?' + Model.getPasteId() + '#' +
-                CryptTool.base58encode(Model.getPasteKey())
-            );
-
-            // we use text/html instead of text/plain to avoid a bug when
-            // reloading the raw text view (it reverts to type text/html)
-            const $head  = $('head').children().not('noscript, script, link[type="text/css"]'),
-                  newDoc = document.open('text/html', 'replace');
-            newDoc.write('<!DOCTYPE html><html><head>');
-            for (let i = 0; i < $head.length; ++i) {
-                newDoc.write($head[i].outerHTML);
-            }
-            newDoc.write('</head><body><pre>' + DOMPurify.sanitize(Helper.htmlEntities(paste)) + '</pre></body></html>');
-            newDoc.close();
-        }
-
-        /**
-         * saves the language in a cookie and reloads the page
-         *
-         * @name   TopNav.setLanguage
-         * @private
-         * @function
-         * @param  {Event} event
-         */
-        function setLanguage(event)
-        {
-            document.cookie = 'lang=' + $(event.target).data('lang');
-            UiHelper.reloadHome();
-        }
-
-        /**
-         * hides all messages and creates a new paste
-         *
-         * @name   TopNav.clickNewPaste
-         * @private
-         * @function
-         */
-        function clickNewPaste()
-        {
-            Controller.hideStatusMessages();
-            Controller.newPaste();
-        }
-
-        /**
          * retrys some callback registered before
          *
          * @name   TopNav.clickRetryButton
@@ -3723,8 +3193,12 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                 if (expirationDateString !== null) {
                     emailBody += EOL;
                     emailBody += BULLET;
-                    emailBody += I18n._(
-                        'This link will expire after %s.',
+                    // avoid DOMPurify mess with forward slash in expirationDateString
+                    emailBody += Helper.sprintf(
+                        I18n._(
+                            'This link will expire after %s.',
+                            '%s'
+                        ),
                         expirationDateString
                     );
                 }
@@ -4251,7 +3725,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
          */
         me.isAttachmentReadonly = function()
         {
-            return createButtonsDisplayed && $attach.hasClass('hidden');
+            return !createButtonsDisplayed || $attach.hasClass('hidden');
         }
 
         /**
@@ -5299,6 +4773,23 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                 SAFE_FOR_JQUERY: true
             });
 
+            // Add a hook to make all links open a new window
+            DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+                // set all elements owning target to target=_blank
+                if ('target' in node && node.id !== 'pasteurl') {
+                    node.setAttribute('target', '_blank');
+                }
+                // set non-HTML/MathML links to xlink:show=new
+                if (!node.hasAttribute('target') 
+                    && (node.hasAttribute('xlink:href') 
+                        || node.hasAttribute('href'))) {
+                    node.setAttribute('xlink:show', 'new');
+                }
+                if ('rel' in node) {
+                    node.setAttribute('rel', 'nofollow noopener noreferrer');
+                }
+            });
+
             // center all modals
             $('.modal').on('show.bs.modal', function(e) {
                 $(e.target).css({
@@ -5330,6 +4821,12 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             }
             me.initZ();
 
+            // if delete token is passed (i.e. paste has been deleted by this
+            // access), there is nothing more to do
+            if (Model.hasDeleteToken()) {
+                return;
+            }
+
             // check whether existing paste needs to be shown
             try {
                 Model.getPasteId();
@@ -5338,11 +4835,10 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                 return me.newPaste();
             }
 
-            // if delete token is passed (i.e. paste has been deleted by this
-            // access), there is nothing more to do
-            if (Model.hasDeleteToken()) {
-                return;
-            }
+            // always reload on back button to invalidate cache(protect burn after read paste)
+            window.addEventListener('popstate', () => {
+                window.location.reload();
+            });
 
             // display an existing paste
             return me.showPaste();
