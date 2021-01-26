@@ -212,23 +212,6 @@
 							<input type="password" id="passwordinput" placeholder="Password (recommended)" class="form-control" size="23" />
 						</div>
 					</li>
-					<li id="attach" class="hidden dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Attach a file <span class="caret"></span></a>
-						<ul class="dropdown-menu">
-							<li id="filewrap">
-								<div>
-									<input type="file" id="file" name="file" />
-								</div>
-								<div id="dragAndDropFileName" class="dragAndDropFile">alternatively drag & drop a file or paste an image from the clipboard</div>
-							</li>
-							<li id="customattachment" class="hidden"></li>
-							<li>
-								<a id="fileremovebutton"  href="#">
-									Remove attachment
-								</a>
-							</li>
-						</ul>
-					</li>
 					<li class="dropdown">
 						<select id="pasteFormatter" name="pasteFormatter" class="hidden">
 							<option value="plaintext" selected="selected">Plain Text</option>
@@ -263,11 +246,6 @@
 			<section class="container">
 				<div id="remainingtime" role="alert" class="hidden alert alert-info">
 					<span class="glyphicon glyphicon-fire" aria-hidden="true"></span>
-				</div>
-				<div id="attachment" role="alert" class="hidden alert alert-info">
-					<span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-					<a class="alert-link">Download attachment
-</a>
 				</div>
 				<div id="status" role="alert" class="alert alert-info hidden">
 					<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
@@ -358,6 +336,5 @@
 				<div id="replytemplate" class="reply hidden"><input type="text" id="nickname" class="form-control" title="Optional nickname…" placeholder="Optional nickname…" /><textarea id="replymessage" class="replymessage form-control" cols="80" rows="7"></textarea><br /><div id="replystatus" role="alert" class="statusmessage hidden alert"><span class="glyphicon" aria-hidden="true"></span> </div><button id="replybutton" class="btn btn-default btn-sm">Post comment</button></div>
 			</div>
 		</div>
-		<div id="dropzone" class="hidden" tabindex="-1" aria-hidden="true"></div>
 	</body>
 </html>
