@@ -3,6 +3,8 @@
 wget -O - http://127.0.0.1:8890/index.php \
   | sed \
     -e '1,2d' \
+    -e 's/&lt;/</g' \
+    -e 's/&gt;/>/g' \
   > gen/index.html
 
 mkdown() {
