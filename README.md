@@ -1,5 +1,7 @@
 # bin.bublina.eu.org
-Minimalist POSIX shell reimplementation of PrivateBin
+Minimalist POSIX shell reimplementation of
+server-side [PrivateBin](https://privatebin.info/),
+everything else is the same.
 
 See https://bin.bublina.eu.org
 or http://roep6uguk4gv7grlnoc3swz4uomu572ho2x6byzxpp6wfisdfjywe6qd.onion
