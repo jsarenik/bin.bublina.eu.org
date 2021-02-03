@@ -12,7 +12,6 @@ and the latter (onion link) goes straight to
 Notable differences to PrivateBin:
 
   - i18n not working yet - not important
-  - [correct cleanup of TTL pastebins not implemented yet](contrib/cleanup.sh)
 
 What works:
 
@@ -20,6 +19,7 @@ What works:
   - [rate limiting](public/cgi-bin/aPOST.sh#L14)
   - [size limit](public/cgi-bin/aPOST.sh#L26-L35)
   - [comments with static avatar for all](public/cgi-bin/aPOST.sh#L38-L50)
+  - [correct cleanup of TTL pastebins](contrib/cleanup.sh)
 
 ## How to upgrade to current PrivateBin
 
