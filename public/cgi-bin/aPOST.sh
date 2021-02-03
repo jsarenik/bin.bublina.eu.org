@@ -62,6 +62,7 @@ else
   t5min=300
   t10mi=600
   t1hou=3600
+  t1day=86400
   t1wee=604800
   t1mon=2592000
   t1yea=31536000
