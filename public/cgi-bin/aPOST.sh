@@ -55,18 +55,28 @@ else
     ! mkdir -p $WHERE/$id
   do : ; done
   TD=$WHERE/$id
-  mv $TMP $TD/data
-  EXPIRE=$(grep -o '"expire":"[^"]\+"' $TMP-meta | cut -b11-14)
-  rm -rf $TMP*
-  tneve=0
+
+  # Following time definitions may be kept in sync with
+  # the configuration according to which the index.html
+  # is generated, in that case sending a hand-crafted
+  # JSON will not help and the paste will be deleted
+  #
+  # Here for example, tneve, t1mon and t1yea are disabled.
+#  tneve=0
   t5min=300
   t10mi=600
   t1hou=3600
   t1day=86400
   t1wee=604800
-  t1mon=2592000
-  t1yea=31536000
+#  t1mon=2592000
+#  t1yea=31536000
+
+  EXPIRE=$(grep -o '"expire":"[^"]\+"' $TMP-meta | cut -b11-14)
   eval EXPIRES=$(echo \$t$EXPIRE)
+  echo $EXPIRES | grep -q . || { rm -rf $TD $TMP*; exit 1; }
+
+  mv $TMP $TD/data
+  rm -rf $TMP*
   {
   echo CREATED=$NOW
   echo EXPIRES=$EXPIRES
