@@ -2,7 +2,8 @@ echo "Content-Type: application/json; charset=UTF-8"
 echo
 NOW=$(date +%s)
 TD=$WHERE/$pasteid
-. $TD/env
+CREATED=$NOW
+test -r $TD/env && . $TD/env
 TTL=$((CREATED+EXPIRES-NOW))
 # Following line is not needed because TTL will be negative
 # when EXPIRES is 0
