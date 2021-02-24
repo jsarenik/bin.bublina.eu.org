@@ -12,7 +12,7 @@ echo "{\"status\":0,\"id\":\"$pasteid\",\"url\":\"/?$pasteid\",\
 $(cat $TD/data),\"meta\":{\"created\":$CREATED,\"time_to_live\":$TTL},"
 
 if
-  ! test -d $TD/comment
+  ! test -d $TD/comment || test -r $TD/msg
 then
   echo "\"comments\":[],\"comment_count\":0,\"comment_offset\":0,\
 \"@context\":\"?jsonld=paste\"\
