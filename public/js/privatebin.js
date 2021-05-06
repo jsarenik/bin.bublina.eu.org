@@ -6,7 +6,7 @@
  * @see       {@link https://github.com/PrivateBin/PrivateBin}
  * @copyright 2012 Sébastien SAUVAGE ({@link http://sebsauvage.net})
  * @license   {@link https://www.opensource.org/licenses/zlib-license.php The zlib/libpng License}
- * @version   1.3.4
+ * @version   1.3.5
  * @name      PrivateBin
  * @namespace
  */
@@ -784,6 +784,8 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                     return n > 1 ? 1 : 0;
                 case 'he':
                     return n === 1 ? 0 : (n === 2 ? 1 : ((n < 0 || n > 10) && (n % 10 === 0) ? 2 : 3));
+                case 'id':
+                    return 0;
                 case 'lt':
                     return n % 10 === 1 && n % 100 !== 11 ? 0 : ((n % 10 >= 2 && n % 100 < 10 || n % 100 >= 20) ? 1 : 2);
                 case 'pl':
@@ -793,7 +795,7 @@ jQuery.PrivateBin = (function($, RawDeflate) {
                     return n % 10 === 1 && n % 100 !== 11 ? 0 : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2);
                 case 'sl':
                     return n % 100 === 1 ? 1 : (n % 100 === 2 ? 2 : (n % 100 === 3 || n % 100 === 4 ? 3 : 0));
-                // bg, de, en, es, hu, it, nl, no, pt
+                // bg, ca, de, en, es, hu, it, nl, no, pt
                 default:
                     return n !== 1 ? 1 : 0;
             }
@@ -3506,6 +3508,8 @@ jQuery.PrivateBin = (function($, RawDeflate) {
 
         let createButtonsDisplayed = false,
             viewButtonsDisplayed = false,
+            burnAfterReadingDefault = false,
+            openDiscussionDefault = false,
             $attach,
             $burnAfterReading,
             $burnAfterReadingOption,
@@ -4150,13 +4154,18 @@ jQuery.PrivateBin = (function($, RawDeflate) {
         me.resetInput = function()
         {
             clearAttachmentInput();
+            $burnAfterReading.prop('checked', burnAfterReadingDefault);
+            $openDiscussion.prop('checked', openDiscussionDefault);
+            if (openDiscussionDefault || !burnAfterReadingDefault) $openDiscussionOption.removeClass('buttondisabled');
+            if (burnAfterReadingDefault || !openDiscussionDefault) $burnAfterReadingOption.removeClass('buttondisabled');
 
-            $openDiscussion.prop('checked', false);
-            $burnAfterReading.prop('checked', false);
-            $openDiscussionOption.removeClass('buttondisabled');
-            $burnAfterReadingOption.removeClass('buttondisabled');
-
-            // TODO: reset expiration time
+            pasteExpiration = Model.getExpirationDefault() || pasteExpiration;
+            $('#pasteExpiration>option').each(function() {
+                const $this = $(this);
+                if ($this.val() === pasteExpiration) {
+                    $('#pasteExpirationDisplay').text($this.text());
+                }
+            });
         };
 
         /**
@@ -4354,7 +4363,9 @@ jQuery.PrivateBin = (function($, RawDeflate) {
             changeBurnAfterReading();
             changeOpenDiscussion();
 
-            // get default value from template or fall back to set value
+            // get default values from template or fall back to set value
+            burnAfterReadingDefault = me.getBurnAfterReading();
+            openDiscussionDefault = me.getOpenDiscussion();
             pasteExpiration = Model.getExpirationDefault() || pasteExpiration;
 
             createButtonsDisplayed = false;
