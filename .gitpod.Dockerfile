@@ -8,3 +8,5 @@ FROM gitpod/workspace-full
 
 # Install custom tools, runtime, etc.
 RUN sudo apt update && sudo apt install -y busybox && sudo rm -rf /var/lib/apt/lists/*
+RUN sudo mkdir /busybox
+RUN sudo /bin/busybox --install /busybox
