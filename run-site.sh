@@ -8,21 +8,26 @@ MYHOST=${2:-"bin.bublina.eu.org"}
 {
 echo "Starting httpd at http://127.0.0.1:$PORT"
 echo
-echo "Example Caddy configuration:"
+echo "Example Caddy2 configuration:"
 } 1>&2
 cat <<EOF
 $MYHOST {
-  root /path/to/public
-  proxy / http://127.0.0.1:$PORT {
-    except /css /js /img /robots.txt /browserconfig.xml
-    transparent
+  encode zstd gzip
+  file_server {
+    index index.html index.txt
   }
-  header /css Cache-Control "max-age=2592000"
-  header /js Cache-Control "max-age=2592000"
-  header /img Cache-Control "max-age=2592000"
-  header /robots.txt Cache-Control "max-age=2592000"
-  header /browserconfig.xml Cache-Control "max-age=2592000"
-  gzip
+  @static {
+    path /css/* /js/* /img/* /robots.txt /browserconfig.xml
+  }
+  handle @static {
+    root * $PWD/public
+    header Cache-Control "max-age=31536000"
+  }
+  handle /* {
+    reverse_proxy /* http://127.0.0.1:$PORT {
+      header_up X-Real-IP {remote_host}
+    }
+  }
 }
 EOF
 #./genmin.sh
