@@ -4,3 +4,7 @@ image:
 tasks:
   - init: cat README.md
     command: ./run-site.sh
+
+ports:
+  - port: 8890
+    onOpen: open-browser
