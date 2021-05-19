@@ -1,4 +1,7 @@
 # bin.bublina.eu.org
+
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/jsarenik/bin.bublina.eu.org)
+
 Minimalist POSIX shell reimplementation of
 server-side [PrivateBin](https://privatebin.info/),
 everything else is the same.
